@@ -1,1 +1,1 @@
-DFNN4GCC
+DNN_gravity_compensation

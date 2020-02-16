@@ -1,0 +1,39 @@
+{
+  "GC_controller": {
+    "safe_upper_torque_limit": [
+      0.2,
+      0.8,
+      0.6,
+      0.2,
+      0.2,
+      0.2,
+      0
+    ],
+    "safe_lower_torque_limit": [
+      -0.2,
+      -0.1,
+      0,
+      -0.3,
+      -0.1,
+      -0.1,
+      0
+    ],
+    "beta_vel_amplitude": [
+      2,
+      2,
+      2,
+      2,
+      10,
+      6,
+      2
+    ],
+    "GC_init_pos":[ 
+          0,
+          0,
+          0,
+          0,
+          90,
+          0,
+          0]
+     }
+}
