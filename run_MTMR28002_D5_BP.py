@@ -8,14 +8,13 @@ from os import mkdir
 from loadModel import get_model, save_model
 
 def loop_func(train_data_path, valid_data_path, test_data_path, use_net):
-    # config hyper-parameters
     max_training_epoch = 2000 # stop train when reach maximum training epoch
     goal_loss = 1e-4 # stop train when reach goal loss
     valid_ratio = 0.2 # ratio of validation data set over train and validate data
     batch_size = 256 # batch size for mini-batch gradient descent
     weight_decay = 1e-4
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    earlyStop_patience = 60
+    earlyStop_patience = 20
     learning_rate = 0.06
     D = 5
 
@@ -41,11 +40,11 @@ def loop_func(train_data_path, valid_data_path, test_data_path, use_net):
     model = train(model, train_loader, valid_loader, optimizer, loss_fn, early_stopping, max_training_epoch, goal_loss, is_plot=False)
 
     ### Get the predict output from test data and save to Matlab file
-    train_dataset = load_data_dir(join(train_data_path,'data'), device='cpu', is_scale=False)
+    train_dataset = load_data_dir(join(train_data_path,'data'), device='cpu', input_scaler=None, output_scaler=None, is_inputScale = False, is_outputScale = False)
     train_input_mat = train_dataset.x_data
     train_output_mat = train_dataset.y_data
     model = model.to('cpu')
-    test_dataset = load_data_dir(join(test_data_path,"data"), device='cpu', is_scale=False)
+    test_dataset = load_data_dir(join(test_data_path,"data"), device='cpu', input_scaler=None, output_scaler=None, is_inputScale = False, is_outputScale = False)
     test_input_mat = test_dataset.x_data
     test_output_mat = predict(model, test_input_mat, input_scaler, output_scaler)
     try:
