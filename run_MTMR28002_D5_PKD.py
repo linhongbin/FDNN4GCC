@@ -7,30 +7,28 @@ import scipy.io as sio
 from os import mkdir
 from loadModel import get_model, save_model
 from AnalyticalModel import *
+from HyperParam import get_hyper_param
+def loop_func(train_data_path, valid_data_path, test_data_path, use_net,robot,teacherModelType):
+    train_type = 'PKD'
+    param_dict = get_hyper_param(robot,use_net=use_net,train_type=train_type)
 
-def loop_func(train_data_path, valid_data_path, test_data_path, use_net):
-    # config hyper-parameters
-    max_training_epoch = 2000 # stop train when reach maximum training epoch
-    goal_loss = 1e-4 # stop train when reach goal loss
-    valid_ratio = 0.2 # ratio of validation data set over train and validate data
-    batch_size = 256 # batch size for mini-batch gradient descent
-    weight_decay = 1e-4
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    earlyStop_patience = 20
-    learning_rate = 0.06
-    D = 5
-    teacher_sample_num = 30000
-    initLamda = 5
-    endLamda = 0.01
-    decaySteps = 100
+    max_training_epoch = param_dict['max_training_epoch'] # stop train when reach maximum training epoch
+    goal_loss = param_dict['goal_loss'] # stop train when reach goal loss
+    batch_size = param_dict['batch_size'] # batch size for mini-batch gradient descent
+    weight_decay = param_dict['weight_decay']
+    device = param_dict['device']
+    earlyStop_patience = param_dict['earlyStop_patience']
+    learning_rate = param_dict['learning_rate']
+    D = param_dict['D']
+    teacher_sample_num = param_dict['teacher_sample_num']
+    initLamda = param_dict['initLamda']
+    endLamda = param_dict['endLamda']
+    decayStepsLamda = param_dict['decayStepsLamda']
 
-    teacherModelType = 'MTM_MLSE4POL'
-
+    device = torch.device(device)
     model = get_model('MTM', use_net, D, device=device)
 
-    if use_net == 'Lagrangian_SinNet':
-        earlyStop_patience = 80
-        learning_rate = 0.1
+
 
 
     # train_loader, valid_loader, input_scaler, output_scaler, = load_train_N_validate_data(join(train_data_path, "data"),
@@ -55,7 +53,7 @@ def loop_func(train_data_path, valid_data_path, test_data_path, use_net):
 
 
     ### Train model
-    model = KDtrain(model, train_loader, valid_loader, Teacher_trainLoader, optimizer, loss_fn, early_stopping, max_training_epoch, goal_loss, initLamda, endLamda, decaySteps, is_plot=False)
+    model = KDtrain(model, train_loader, valid_loader, Teacher_trainLoader, optimizer, loss_fn, early_stopping, max_training_epoch, goal_loss, initLamda, endLamda, decayStepsLamda, is_plot=False)
 
     ### Get the predict output from test data and save to Matlab file
     train_dataset = load_data_dir(join(train_data_path,'data'), device='cpu', input_scaler=None, output_scaler=None, is_inputScale = False, is_outputScale = False)
@@ -109,4 +107,4 @@ train_data_path = join("data", "MTMR_28002", "real", "uniform", "N5", 'D5', "dua
 valid_data_path = join("data", "MTMR_28002", "real", "uniform",  "N4", 'D5', "dual")
 test_data_path = join("data", "MTMR_28002", "real", "random", 'N10','D5')
 # loop_func(train_data_path, valid_data_path, test_data_path, 'SinNet')
-loop_func(train_data_path, valid_data_path, test_data_path, 'SinInput_ReLUNet')
+loop_func(train_data_path, valid_data_path, test_data_path, 'SinInput_ReLUNet','MTMR28002',teacherModelType ='MTM_MLSE4POL')

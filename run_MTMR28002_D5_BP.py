@@ -6,23 +6,23 @@ from evaluateTool import *
 import scipy.io as sio
 from os import mkdir
 from loadModel import get_model, save_model
+from HyperParam import get_hyper_param
 
-def loop_func(train_data_path, valid_data_path, test_data_path, use_net):
-    max_training_epoch = 2000 # stop train when reach maximum training epoch
-    goal_loss = 1e-4 # stop train when reach goal loss
-    valid_ratio = 0.2 # ratio of validation data set over train and validate data
-    batch_size = 256 # batch size for mini-batch gradient descent
-    weight_decay = 1e-4
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    earlyStop_patience = 20
-    learning_rate = 0.06
-    D = 5
+def loop_func(train_data_path, valid_data_path, test_data_path, use_net, robot,):
+    param_dict = get_hyper_param(robot)
 
+    max_training_epoch = param_dict['max_training_epoch'] # stop train when reach maximum training epoch
+    goal_loss = param_dict['goal_loss'] # stop train when reach goal loss
+    batch_size = param_dict['batch_size'] # batch size for mini-batch gradient descent
+    weight_decay = param_dict['weight_decay']
+    device = param_dict['device']
+    earlyStop_patience = param_dict['earlyStop_patience']
+    learning_rate = param_dict['learning_rate']
+    D = param_dict['D']
+
+    device = torch.device(device)
     model = get_model('MTM', use_net, D, device=device)
 
-    if use_net == 'Lagrangian_SinNet':
-        earlyStop_patience = 80
-        learning_rate = 0.1
 
 
     # train_loader, valid_loader, input_scaler, output_scaler, = load_train_N_validate_data(join(train_data_path, "data"),
@@ -90,5 +90,5 @@ def loop_func(train_data_path, valid_data_path, test_data_path, use_net):
 train_data_path = join("data", "MTMR_28002", "real", "uniform", "N5", 'D5', "dual")
 valid_data_path = join("data", "MTMR_28002", "real", "uniform",  "N4", 'D5', "dual")
 test_data_path = join("data", "MTMR_28002", "real", "random", 'N10','D5')
-loop_func(train_data_path, valid_data_path, test_data_path, 'SinNet')
+loop_func(train_data_path, valid_data_path, test_data_path, 'SinNet','MTMR28002')
 
