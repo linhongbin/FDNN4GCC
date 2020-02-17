@@ -1,6 +1,8 @@
 from Net import *
 import numpy as np
 from os import path, mkdir
+from pathlib import Path
+
 import torch
 def get_model(robot, use_net, D, device='cpu'):
     # define net for MTM
@@ -60,8 +62,8 @@ def get_model(robot, use_net, D, device='cpu'):
             model = SinInput_ReLUNet(D, [30,30,30], D)
 
         elif use_net == 'ReLU_Dual_UDirection':
-            pos_net = ReLuNet(D, [30, 30, 30], D).to(device)
-            neg_net = ReLuNet(D, [30, 30, 30], D).to(device)
+            pos_net = ReLuNet(2*D, [30, 30, 30], D).to(device)
+            neg_net = ReLuNet(2*D, [30, 30, 30], D).to(device)
             model = DualNets_UDirection(pos_net, neg_net, D, device)
         else:
             raise Exception(use_net + 'is not support')
@@ -104,8 +106,9 @@ def get_model(robot, use_net, D, device='cpu'):
     return model
 
 def save_model(file_path, file_name, model, input_scaler=None, output_scaler=None):
-    if not path.exists(file_path):
-        mkdir(path)
+    # if not path.exists(file_path):
+    #     mkdir(file_path)
+    Path(file_path).mkdir(parents=True, exist_ok=True)
 
     if isinstance(model, list):
         save_dict = {'model' + str(i + 1): model[i].state_dict() for i in range(len(model))}

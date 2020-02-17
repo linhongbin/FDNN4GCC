@@ -315,7 +315,7 @@ class DualNets_UDirection(torch.nn.Module):
         tor_pos = self.pos_net(z)
         tor_neg = self.neg_net(z)
         u_mat = torch.zeros(delta_q.shape).to(self.device)
-        u_mat[u_mat>0]=1
+        u_mat[delta_q>0]=1
         tor = tor_pos * u_mat + tor_neg * (1-u_mat)
         return tor
 

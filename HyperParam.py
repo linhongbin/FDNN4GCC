@@ -10,7 +10,7 @@ def get_hyper_param(robot, use_net=None, train_type=None):
         param_dict['device'] = 'cuda' if torch.cuda.is_available() else 'cpu'
         param_dict['earlyStop_patience'] = 20
         param_dict['learning_rate'] = 0.06
-        param_dict['D'] = 5
+        param_dict['D'] = 6
 
         if train_type == 'PKD':
             param_dict['teacher_sample_num'] = 30000

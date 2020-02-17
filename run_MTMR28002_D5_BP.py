@@ -82,8 +82,8 @@ def loop_func(train_data_path, valid_data_path, test_data_path, use_net, robot,)
 #     loop_func(train_data_path, test_data_path, use_net)
 
 # test
-train_data_path = join("data", "MTMR_28002", "real", "uniform", "N5", 'D5', "dual")
-valid_data_path = join("data", "MTMR_28002", "real", "uniform",  "N4", 'D5', "dual")
+train_data_path = join("data", "MTMR_28002", "real", "uniform", "N5", 'D6_SinCosInput', "dual")
+valid_data_path = join("data", "MTMR_28002", "real", "uniform",  "N4", 'D6_SinCosInput', "dual")
 test_data_path = join("data", "MTMR_28002", "real", "random", 'N10','D5')
-loop_func(train_data_path, valid_data_path, test_data_path, 'SinNet','MTMR28002')
+loop_func(train_data_path, valid_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002')
 

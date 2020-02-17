@@ -213,6 +213,7 @@ def load_teacher_train_data(teacherModel, sample_num, batch_size, device, input_
 def load_preProcessData(train_data_dir, batch_size, device, valid_data_path = None, valid_ratio = 0.2,teacherModel=None, teacher_sample_num=None):
 
     # load sampled train data
+    D = 6
     data_list = []
     if not os.path.exists(train_data_dir):
         raise Exception('cannot find directory: {}'.format(os.getcwd()+train_data_dir))
@@ -230,9 +231,6 @@ def load_preProcessData(train_data_dir, batch_size, device, valid_data_path = No
         train_input_mat = input if len(train_input_mat) == 0 else np.concatenate((train_input_mat, input), axis=0)
         train_output_mat = output if len(train_output_mat) == 0 else np.concatenate((train_output_mat, output), axis=0)
 
-    # transformation of trigonometric representation transformation
-    train_input_mat = np.concatenate((np.sin(train_input_mat),np.cos(train_input_mat)), axis=1)
-
     # load data of teacher model
     if teacherModel is not None:
         input_mat, output_mat, _, _ = teacherModel.random_model_sampling(teacher_sample_num, None,None,False,False)
@@ -245,8 +243,6 @@ def load_preProcessData(train_data_dir, batch_size, device, valid_data_path = No
             teacher_input_mat = input if len(teacher_input_mat) == 0 else np.concatenate((teacher_input_mat, input), axis=0)
             teacher_output_mat = output if len(teacher_output_mat) == 0 else np.concatenate((teacher_output_mat, output), axis=0)
 
-        # transformation of trigonometric representation transformation
-        teacher_input_mat = np.concatenate((np.sin(teacher_input_mat),np.cos(teacher_input_mat)), axis=1)
 
     # caculate mean and std
     total_input_mat = train_input_mat
@@ -255,23 +251,25 @@ def load_preProcessData(train_data_dir, batch_size, device, valid_data_path = No
         total_input_mat = np.concatenate((total_input_mat, teacher_input_mat), axis=0)
         total_output_mat = np.concatenate((total_output_mat, teacher_output_mat), axis=0)
 
-    input_mean = np.mean(total_input_mat, axis=0)
+    input_mean = np.mean(total_input_mat[:,:D*2], axis=0)
     output_mean = np.mean(total_output_mat, axis=0)
-    input_std = np.std(total_input_mat, axis=0)
+    input_std = np.std(total_input_mat[:,:D*2], axis=0)
     output_std = np.std(total_output_mat, axis=0)
 
     # scaling the input and output matrix
-    for i in range(train_input_mat.shape[0]):
-        train_input_mat[i,1:12] = (train_input_mat[i,1:12] - input_mean[i])/input_std[i]
-        train_output_mat[i,1:12] = (train_output_mat[i,1:12] - output_mean[i])/output_std[i]
+    for i in range(D*2):
+        train_input_mat[i,:D*2] = (train_input_mat[i,:D*2] - input_mean[i])/input_std[i]
+    for i in range(D):
+        train_output_mat[i,:] = (train_output_mat[i,:] - output_mean[i])/output_std[i]
     train_dataset = NumpyDataSet(train_input_mat, train_output_mat, device)
 
 
     # scaling the input and output matrix
     if teacherModel is not None:
-        for i in range(teacher_input_mat.shape[0]):
-            teacher_input_mat[i,1:12] = (teacher_input_mat[i,1:12]- input_mean[i])/input_std[i]
-            teacher_output_mat[i,1:12] = (teacher_output_mat[i,1:12] - output_mean[i])/output_std[i]
+        for i in range(D*2):
+            teacher_input_mat[i, :D * 2] = (teacher_input_mat[i, :D * 2] - input_mean[i]) / input_std[i]
+        for i in range(D):
+            teacher_output_mat[i, :] = (teacher_output_mat[i, :] - output_mean[i]) / output_std[i]
         teacher_dataset = NumpyDataSet(teacher_input_mat, teacher_output_mat, device)
 
     if valid_data_path == None:
@@ -313,13 +311,13 @@ def load_preProcessData(train_data_dir, batch_size, device, valid_data_path = No
             valid_output_mat = output if len(valid_output_mat) == 0 else np.concatenate((valid_output_mat, output),
                                                                                         axis=0)
 
-        # transformation of trigonometric representation transformation
-        teacher_input_mat = np.concatenate((np.sin(teacher_input_mat),np.cos(teacher_input_mat)), axis=1)
 
         # scaling the input and output matrix
-        for i in range(valid_input_mat.shape[0]):
-            valid_input_mat[:, i] = (valid_input_mat[:, i] - input_mean[i]) / input_std[i]
-            valid_output_mat[:, i] = (valid_output_mat[:, i] - output_mean[i]) / output_std[i]
+        for i in range(D*2):
+            valid_input_mat[i, :D * 2] = (valid_input_mat[i, :D * 2] - input_mean[i]) / input_std[i]
+        for i in range(D):
+            valid_output_mat[i, :] = (valid_output_mat[i, :] - output_mean[i]) / output_std[i]
+
         valid_dataset = NumpyDataSet(valid_input_mat, valid_output_mat, device)
         valid_loader = DataLoader(valid_dataset,
                                   batch_size=batch_size,
