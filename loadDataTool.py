@@ -256,20 +256,26 @@ def load_preProcessData(train_data_dir, batch_size, device, valid_data_path = No
     input_std = np.std(total_input_mat[:,:D*2], axis=0)
     output_std = np.std(total_output_mat, axis=0)
 
+    # # Joint 1 data is too little, so have to set normalized param to unit
+    # input_mean[0] = 1
+    # output_mean[0] = 1
+    # input_std[0] = 1
+    # output_std[0] = 1
+
     # scaling the input and output matrix
     for i in range(D*2):
-        train_input_mat[i,:D*2] = (train_input_mat[i,:D*2] - input_mean[i])/input_std[i]
+        train_input_mat[:,i] = (train_input_mat[:,i] - input_mean[i])/input_std[i]
     for i in range(D):
-        train_output_mat[i,:] = (train_output_mat[i,:] - output_mean[i])/output_std[i]
+        train_output_mat[:,i]= (train_output_mat[:,i] - output_mean[i])/output_std[i]
     train_dataset = NumpyDataSet(train_input_mat, train_output_mat, device)
 
 
     # scaling the input and output matrix
     if teacherModel is not None:
         for i in range(D*2):
-            teacher_input_mat[i, :D * 2] = (teacher_input_mat[i, :D * 2] - input_mean[i]) / input_std[i]
+            teacher_input_mat[:,i] = (teacher_input_mat[:,i] - input_mean[i]) / input_std[i]
         for i in range(D):
-            teacher_output_mat[i, :] = (teacher_output_mat[i, :] - output_mean[i]) / output_std[i]
+            teacher_output_mat[:,i] = (teacher_output_mat[:,i] - output_mean[i]) / output_std[i]
         teacher_dataset = NumpyDataSet(teacher_input_mat, teacher_output_mat, device)
 
     if valid_data_path == None:
@@ -314,9 +320,9 @@ def load_preProcessData(train_data_dir, batch_size, device, valid_data_path = No
 
         # scaling the input and output matrix
         for i in range(D*2):
-            valid_input_mat[i, :D * 2] = (valid_input_mat[i, :D * 2] - input_mean[i]) / input_std[i]
+            valid_input_mat[:,i] = (valid_input_mat[:,i] - input_mean[i]) / input_std[i]
         for i in range(D):
-            valid_output_mat[i, :] = (valid_output_mat[i, :] - output_mean[i]) / output_std[i]
+            valid_output_mat[:,i] = (valid_output_mat[:,i] - output_mean[i]) / output_std[i]
 
         valid_dataset = NumpyDataSet(valid_input_mat, valid_output_mat, device)
         valid_loader = DataLoader(valid_dataset,

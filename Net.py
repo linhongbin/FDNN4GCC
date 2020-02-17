@@ -308,6 +308,10 @@ class DualNets_UDirection(torch.nn.Module):
         self.neg_net = neg_net
         self.dof = dof
         self.device = device
+        self.input_mean = None
+        self.input_std = None
+        self.output_mean =None
+        self.output_std = None
 
     def forward(self, x):
         z = x[:,:self.dof*2]
@@ -318,5 +322,27 @@ class DualNets_UDirection(torch.nn.Module):
         u_mat[delta_q>0]=1
         tor = tor_pos * u_mat + tor_neg * (1-u_mat)
         return tor
+
+    def set_normalized_param(self,input_mean, input_std, output_mean, output_std):
+        self.input_mean = input_mean
+        self.input_std = input_std
+        self.output_mean =output_mean
+        self.output_std = output_std
+
+
+    def predict_NP(self, input_mat):
+        D = self.dof
+        for i in range(D * 2):
+            input_mat[:,i] = (input_mat[:,i] - self.input_mean[i]) / self.input_std[i]
+
+        input = torch.from_numpy(input_mat).to('cpu').float()
+        output = self.forward(input)
+        output_mat = output.detach().numpy()
+
+        for i in range(D):
+            output_mat[:,i] = (output_mat[:,i] * self.output_std[i]) + self.output_mean[i]
+
+
+        return output_mat
 
 
