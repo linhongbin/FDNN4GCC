@@ -331,3 +331,37 @@ class MTM_MLSE4POL():
             output_mat = output_scaler.transform(input_mat)
 
         return input_mat, output_mat, input_scaler, output_scaler
+
+    def predict_SinCosInput(self, q_mat, delta_q_mat):
+        D = 6
+        output_mat = np.zeros((q_mat.shape[0], D))
+        for i in range(q_mat.shape[0]):
+            q1 = q_mat[i, 0]
+            q2 = q_mat[i,1]
+            q3 = q_mat[i,2]
+            q4 = q_mat[i,3]
+            q5 = q_mat[i,4]
+            q6 = q_mat[i,5]
+            tor_pos = self.regressor_pos(q1, q2, q3, q4, q5, q6).dot(self.param_vec).reshape(7)
+            tor_neg = self.regressor_neg(q1, q2, q3, q4, q5, q6).dot(self.param_vec).reshape(7)
+            u = delta_q_mat[i,:]
+            tor = tor_pos * u + tor_neg * (1-u)
+            output_mat[i,:] = tor[:-1]
+        return output_mat
+
+    def random_sampling_SinCosInput(self, sample_num):
+        D = 6
+        q_mat = np.zeros((sample_num, D))
+        for i in range(sample_num):
+            rand_arr = np.random.rand(D)
+            q_mat[i, :] = rand_arr * (self.jnt_upper_limit - self.jnt_lower_limit) + self.jnt_lower_limit
+
+        delta_q_mat = np.zeros((sample_num, D))
+        for i in range(sample_num):
+            rand_arr = np.random.rand(D)
+            for j in range(D):
+                delta_q_mat[i, j] = 1 if rand_arr[j]>0.5 else 0
+        input_mat = np.concatenate((np.sin(q_mat), np.cos(q_mat), delta_q_mat), axis = 1)
+
+        output_mat = self.predict_SinCosInput(q_mat, delta_q_mat)
+        return input_mat, output_mat

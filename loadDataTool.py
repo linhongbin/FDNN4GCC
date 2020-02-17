@@ -233,7 +233,7 @@ def load_preProcessData(train_data_dir, batch_size, device, valid_data_path = No
 
     # load data of teacher model
     if teacherModel is not None:
-        input_mat, output_mat, _, _ = teacherModel.random_model_sampling(teacher_sample_num, None,None,False,False)
+        input_mat, output_mat = teacherModel.random_sampling_SinCosInput(teacher_sample_num)
         teacher_input_mat = []
         teacher_output_mat = []
         # load .mat file to numpy
