@@ -210,6 +210,131 @@ def load_teacher_train_data(teacherModel, sample_num, batch_size, device, input_
                                   shuffle=True)
 
 
+def load_preProcessData(train_data_dir, batch_size, device, valid_data_path = None, valid_ratio = 0.2,teacherModel=None, teacher_sample_num=None):
+
+    # load sampled train data
+    data_list = []
+    if not os.path.exists(train_data_dir):
+        raise Exception('cannot find directory: {}'.format(os.getcwd()+train_data_dir))
+    for root, dirs, files in os.walk(train_data_dir):
+        for file in files:
+            if file.endswith(".mat"):
+                print('Load Data: ', os.path.join(root, file))
+                data_list.append(os.path.join(root, file))
+    train_input_mat = []
+    train_output_mat = []
+    # load .mat file to numpy
+    for file_name in data_list:
+        input = sio.loadmat(file_name)['input_mat']
+        output = sio.loadmat(file_name)['output_mat']
+        train_input_mat = input if len(train_input_mat) == 0 else np.concatenate((train_input_mat, input), axis=0)
+        train_output_mat = output if len(train_output_mat) == 0 else np.concatenate((train_output_mat, output), axis=0)
+
+    # transformation of trigonometric representation transformation
+    train_input_mat = np.concatenate((np.sin(train_input_mat),np.cos(train_input_mat)), axis=1)
+
+    # load data of teacher model
+    if teacherModel is not None:
+        input_mat, output_mat, _, _ = teacherModel.random_model_sampling(teacherModel, None,None,False,False)
+        teacher_input_mat = []
+        teacher_output_mat = []
+        # load .mat file to numpy
+        for file_name in data_list:
+            input = sio.loadmat(file_name)['input_mat']
+            output = sio.loadmat(file_name)['output_mat']
+            teacher_input_mat = input if len(teacher_input_mat) == 0 else np.concatenate((teacher_input_mat, input), axis=0)
+            teacher_output_mat = output if len(teacher_output_mat) == 0 else np.concatenate((teacher_output_mat, output), axis=0)
+
+        # transformation of trigonometric representation transformation
+        teacher_input_mat = np.concatenate((np.sin(teacher_input_mat),np.cos(teacher_input_mat)), axis=1)
+
+    # caculate mean and std
+    total_input_mat = train_input_mat
+    total_output_mat = train_output_mat
+    if teacherModel is not None:
+        total_input_mat = np.concatenate((total_input_mat, teacher_input_mat), axis=0)
+        total_output_mat = np.concatenate((total_output_mat, teacher_output_mat), axis=0)
+
+    input_mean = np.mean(total_input_mat, axis=0)
+    output_mean = np.mean(total_output_mat, axis=0)
+    input_std = np.std(total_input_mat, axis=0)
+    output_std = np.std(total_output_mat, axis=0)
+
+    # scaling the input and output matrix
+    for i in range(train_input_mat.shape[0]):
+        train_input_mat[:,i] = (train_input_mat[:,i] - input_mean[i])/input_std[i]
+        train_output_mat[:,i] = (train_output_mat[:,i] - output_mean[i])/output_std[i]
+    train_dataset = NumpyDataSet(train_input_mat, train_output_mat, device)
 
 
-    return train_loader, valid_loader, input_scaler, output_scaler
+    # scaling the input and output matrix
+    if teacherModel is not None:
+        for i in range(teacher_input_mat.shape[0]):
+            teacher_input_mat[:,i] = (teacher_input_mat[:,i] - input_mean[i])/input_std[i]
+            teacher_output_mat[:,i] = (teacher_output_mat[:,i] - output_mean[i])/output_std[i]
+        teacher_dataset = NumpyDataSet(teacher_input_mat, teacher_output_mat, device)
+
+    if valid_data_path == None:
+        train_ratio = 1 - valid_ratio
+        train_size = int(train_dataset.__len__() * train_ratio)
+        test_size = train_dataset.__len__() - train_size
+        train_dataset, validate_dataset = torch.utils.data.random_split(train_dataset, [train_size, test_size])
+        train_loader = DataLoader(train_dataset,
+                                  batch_size=batch_size,
+                                  num_workers=0,
+                                  shuffle=True
+                                  )
+        valid_loader = DataLoader(validate_dataset,
+                                  batch_size=batch_size,
+                                  num_workers=0,
+                                  shuffle=True)
+    else:
+        train_loader = DataLoader(train_dataset,
+                                  batch_size=batch_size,
+                                  num_workers=0,
+                                  shuffle=True
+                                  )
+
+        data_list = []
+        if not os.path.exists(valid_data_path):
+            raise Exception('cannot find directory: {}'.format(os.getcwd() + valid_data_path))
+        for root, dirs, files in os.walk(valid_data_path):
+            for file in files:
+                if file.endswith(".mat"):
+                    print('Load Data: ', os.path.join(root, file))
+                    data_list.append(os.path.join(root, file))
+        valid_input_mat = []
+        valid_output_mat = []
+        # load .mat file to numpy
+        for file_name in data_list:
+            input = sio.loadmat(file_name)['input_mat']
+            output = sio.loadmat(file_name)['output_mat']
+            valid_input_mat = input if len(valid_input_mat) == 0 else np.concatenate((valid_input_mat, input), axis=0)
+            valid_output_mat = output if len(valid_output_mat) == 0 else np.concatenate((valid_output_mat, output),
+                                                                                        axis=0)
+
+        # transformation of trigonometric representation transformation
+        teacher_input_mat = np.concatenate((np.sin(teacher_input_mat),np.cos(teacher_input_mat)), axis=1)
+
+        # scaling the input and output matrix
+        for i in range(valid_input_mat.shape[0]):
+            valid_input_mat[:, i] = (valid_input_mat[:, i] - input_mean[i]) / input_std[i]
+            valid_output_mat[:, i] = (valid_output_mat[:, i] - output_mean[i]) / output_std[i]
+        valid_dataset = NumpyDataSet(valid_input_mat, valid_output_mat, device)
+        valid_loader = DataLoader(valid_dataset,
+                                  batch_size=batch_size,
+                                  num_workers=0,
+                                  shuffle=True)
+    if teacherModel is not None:
+        teacher_dataset = NumpyDataSet(teacher_input_mat, teacher_output_mat, device)
+        teacher_loader = DataLoader(teacher_dataset,
+                                  batch_size=batch_size,
+                                  num_workers=0,
+                                  shuffle=True)
+    else:
+        teacher_loader = None
+
+
+
+
+    return train_loader, valid_loader, teacher_loader, input_mean, output_mean, output_std
