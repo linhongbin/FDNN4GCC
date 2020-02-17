@@ -235,7 +235,7 @@ def load_preProcessData(train_data_dir, batch_size, device, valid_data_path = No
 
     # load data of teacher model
     if teacherModel is not None:
-        input_mat, output_mat, _, _ = teacherModel.random_model_sampling(teacherModel, None,None,False,False)
+        input_mat, output_mat, _, _ = teacherModel.random_model_sampling(teacher_sample_num, None,None,False,False)
         teacher_input_mat = []
         teacher_output_mat = []
         # load .mat file to numpy
@@ -262,16 +262,16 @@ def load_preProcessData(train_data_dir, batch_size, device, valid_data_path = No
 
     # scaling the input and output matrix
     for i in range(train_input_mat.shape[0]):
-        train_input_mat[:,i] = (train_input_mat[:,i] - input_mean[i])/input_std[i]
-        train_output_mat[:,i] = (train_output_mat[:,i] - output_mean[i])/output_std[i]
+        train_input_mat[i,1:12] = (train_input_mat[i,1:12] - input_mean[i])/input_std[i]
+        train_output_mat[i,1:12] = (train_output_mat[i,1:12] - output_mean[i])/output_std[i]
     train_dataset = NumpyDataSet(train_input_mat, train_output_mat, device)
 
 
     # scaling the input and output matrix
     if teacherModel is not None:
         for i in range(teacher_input_mat.shape[0]):
-            teacher_input_mat[:,i] = (teacher_input_mat[:,i] - input_mean[i])/input_std[i]
-            teacher_output_mat[:,i] = (teacher_output_mat[:,i] - output_mean[i])/output_std[i]
+            teacher_input_mat[i,1:12] = (teacher_input_mat[i,1:12]- input_mean[i])/input_std[i]
+            teacher_output_mat[i,1:12] = (teacher_output_mat[i,1:12] - output_mean[i])/output_std[i]
         teacher_dataset = NumpyDataSet(teacher_input_mat, teacher_output_mat, device)
 
     if valid_data_path == None:
@@ -326,7 +326,6 @@ def load_preProcessData(train_data_dir, batch_size, device, valid_data_path = No
                                   num_workers=0,
                                   shuffle=True)
     if teacherModel is not None:
-        teacher_dataset = NumpyDataSet(teacher_input_mat, teacher_output_mat, device)
         teacher_loader = DataLoader(teacher_dataset,
                                   batch_size=batch_size,
                                   num_workers=0,
@@ -337,4 +336,4 @@ def load_preProcessData(train_data_dir, batch_size, device, valid_data_path = No
 
 
 
-    return train_loader, valid_loader, teacher_loader, input_mean, output_mean, output_std
+    return train_loader, valid_loader, teacher_loader, input_mean, input_std, output_mean, output_std

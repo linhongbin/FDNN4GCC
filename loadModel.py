@@ -58,6 +58,11 @@ def get_model(robot, use_net, D, device='cpu'):
             model = torch.nn.Sequential(model1, model2)
         elif use_net == 'SinInput_ReLUNet':
             model = SinInput_ReLUNet(D, [30,30,30], D)
+
+        elif use_net == 'ReLU_Dual_UDirection':
+            pos_net = ReLuNet(D, [30, 30, 30], D).to(device)
+            neg_net = ReLuNet(D, [30, 30, 30], D).to(device)
+            model = DualNets_UDirection(pos_net, neg_net, D, device)
         else:
             raise Exception(use_net + 'is not support')
     ### define net for acrobot

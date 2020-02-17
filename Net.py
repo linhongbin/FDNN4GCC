@@ -299,3 +299,24 @@ class SinInput_ReLUNet(torch.nn.Module):
             x = self.relu(x)
         x = self.output_layer(x)
         return x
+
+
+class DualNets_UDirection(torch.nn.Module):
+    def __init__(self, pos_net, neg_net, dof,device='cpu'):
+        super(DualNets_UDirection, self).__init__()
+        self.pos_net = pos_net
+        self.neg_net = neg_net
+        self.dof = dof
+        self.device = device
+
+    def forward(self, x):
+        z = x[:,:self.dof*2]
+        delta_q = x[:,self.dof*2:]
+        tor_pos = self.pos_net(z)
+        tor_neg = self.neg_net(z)
+        u_mat = torch.zeros(delta_q.shape).to(self.device)
+        u_mat[u_mat>0]=1
+        tor = tor_pos * u_mat + tor_neg * (1-u_mat)
+        return tor
+
+

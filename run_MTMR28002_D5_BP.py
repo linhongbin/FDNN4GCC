@@ -1,6 +1,6 @@
 from regularizeTool import EarlyStopping
 from trainTool import train
-from loadDataTool import load_train_N_validate_data
+from loadDataTool import load_preProcessData
 from os.path import join
 from evaluateTool import *
 import scipy.io as sio
@@ -22,15 +22,10 @@ def loop_func(train_data_path, valid_data_path, test_data_path, use_net, robot,)
 
     device = torch.device(device)
     model = get_model('MTM', use_net, D, device=device)
-
-
-
-    # train_loader, valid_loader, input_scaler, output_scaler, = load_train_N_validate_data(join(train_data_path, "data"),
-    #                                                                                       batch_size, valid_data_path=None, valid_ratio=valid_ratio, device=device)
-    train_loader, valid_loader, input_scaler, output_scaler, = load_train_N_validate_data(join(train_data_path, "data"),
-                                                                                          batch_size,
-                                                                                          valid_data_path=join(valid_data_path, "data"),
-                                                                                          device=device)
+    train_loader, valid_loader, _, input_mean, input_std, output_mean, output_std =load_preProcessData(join(train_data_path, "data"),
+                                                                                                       batch_size,
+                                                                                                       device,
+                                                                                                       valid_data_path=join(valid_data_path, "data"))
 
     loss_fn = torch.nn.SmoothL1Loss()
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
@@ -38,29 +33,29 @@ def loop_func(train_data_path, valid_data_path, test_data_path, use_net, robot,)
 
     ### Train model
     model = train(model, train_loader, valid_loader, optimizer, loss_fn, early_stopping, max_training_epoch, goal_loss, is_plot=False)
-
-    ### Get the predict output from test data and save to Matlab file
-    train_dataset = load_data_dir(join(train_data_path,'data'), device='cpu', input_scaler=None, output_scaler=None, is_inputScale = False, is_outputScale = False)
-    train_input_mat = train_dataset.x_data
-    train_output_mat = train_dataset.y_data
-    model = model.to('cpu')
-    test_dataset = load_data_dir(join(test_data_path,"data"), device='cpu', input_scaler=None, output_scaler=None, is_inputScale = False, is_outputScale = False)
-    test_input_mat = test_dataset.x_data
-    test_output_mat = predict(model, test_input_mat, input_scaler, output_scaler)
-    try:
-        mkdir(join(train_data_path,"result"))
-    except:
-        print('Make directory: ', join(train_data_path,"result") + " already exist")
-
-    # save data as .mat file
-    save_result_path = join(train_data_path, "result", use_net+'.mat')
-    print('Save result: ', save_result_path)
-    sio.savemat(save_result_path, {'test_input_mat': test_input_mat.numpy(),
-                                  'test_output_mat': test_output_mat.numpy(),
-                                  'train_input_mat': train_input_mat.numpy(),
-                                  'train_output_mat': train_output_mat.numpy()})
-
-    test_loss, abs_rms_vec, rel_rms_vec = evaluate_rms(model, loss_fn, test_data_path, input_scaler, output_scaler, device, verbose=True)
+    #
+    # ### Get the predict output from test data and save to Matlab file
+    # train_dataset = load_data_dir(join(train_data_path,'data'), device='cpu', input_scaler=None, output_scaler=None, is_inputScale = False, is_outputScale = False)
+    # train_input_mat = train_dataset.x_data
+    # train_output_mat = train_dataset.y_data
+    # model = model.to('cpu')
+    # test_dataset = load_data_dir(join(test_data_path,"data"), device='cpu', input_scaler=None, output_scaler=None, is_inputScale = False, is_outputScale = False)
+    # test_input_mat = test_dataset.x_data
+    # test_output_mat = predict(model, test_input_mat, input_scaler, output_scaler)
+    # try:
+    #     mkdir(join(train_data_path,"result"))
+    # except:
+    #     print('Make directory: ', join(train_data_path,"result") + " already exist")
+    #
+    # # save data as .mat file
+    # save_result_path = join(train_data_path, "result", use_net+'.mat')
+    # print('Save result: ', save_result_path)
+    # sio.savemat(save_result_path, {'test_input_mat': test_input_mat.numpy(),
+    #                               'test_output_mat': test_output_mat.numpy(),
+    #                               'train_input_mat': train_input_mat.numpy(),
+    #                               'train_output_mat': train_output_mat.numpy()})
+    #
+    # test_loss, abs_rms_vec, rel_rms_vec = evaluate_rms(model, loss_fn, test_data_path, input_scaler, output_scaler, device, verbose=True)
 
     # save model to "result/model" folder
     model_save_path = join(train_data_path,"result","model")
@@ -68,7 +63,7 @@ def loop_func(train_data_path, valid_data_path, test_data_path, use_net, robot,)
         mkdir(model_save_path)
     except:
         print('Make directory: ', model_save_path + " already exist")
-    save_model(model_save_path, use_net, model, input_scaler, output_scaler)
+    save_model(model_save_path, use_net, model)
 
 
 ################################################################################################################
