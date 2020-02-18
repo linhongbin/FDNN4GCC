@@ -312,6 +312,10 @@ class DualNets_UDirection(torch.nn.Module):
         self.input_std = None
         self.output_mean =None
         self.output_std = None
+        self.input_mean = torch.nn.Parameter(torch.zeros(2*dof))
+        self.input_std = torch.nn.Parameter(torch.ones(2*dof))
+        self.output_mean = torch.nn.Parameter(torch.zeros(dof))
+        self.output_std = torch.nn.Parameter(torch.ones(dof))
 
     def forward(self, x):
         z = x[:,:self.dof*2]
@@ -324,23 +328,26 @@ class DualNets_UDirection(torch.nn.Module):
         return tor
 
     def set_normalized_param(self,input_mean, input_std, output_mean, output_std):
-        self.input_mean = input_mean
-        self.input_std = input_std
-        self.output_mean =output_mean
-        self.output_std = output_std
-
+        for i in range(self.dof*2):
+            self.input_mean[i] = input_mean[i]
+        for i in range(self.dof*2):
+            self.input_std[i] = input_std[i]
+        for i in range(self.dof):
+            self.output_mean[i] = output_mean[i]
+        for i in range(self.dof):
+            self.output_std[i] = output_std[i]
 
     def predict_NP(self, input_mat):
         D = self.dof
         for i in range(D * 2):
-            input_mat[:,i] = (input_mat[:,i] - self.input_mean[i]) / self.input_std[i]
+            input_mat[:,i] = (input_mat[:,i] - self.input_mean[i].detach().numpy()) / self.input_std[i].detach().numpy()
 
         input = torch.from_numpy(input_mat).to('cpu').float()
         output = self.forward(input)
         output_mat = output.detach().numpy()
 
         for i in range(D):
-            output_mat[:,i] = (output_mat[:,i] * self.output_std[i]) + self.output_mean[i]
+            output_mat[:,i] = (output_mat[:,i] * self.output_std[i].detach().numpy()) + self.output_mean[i].detach().numpy()
 
 
         return output_mat

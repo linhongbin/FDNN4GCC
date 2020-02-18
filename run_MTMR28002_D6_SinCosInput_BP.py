@@ -33,6 +33,7 @@ def loop_func(train_data_path, valid_data_path, test_data_path, use_net, robot,)
     early_stopping = EarlyStopping(patience=earlyStop_patience, verbose=False)
 
     ### Train model
+    model.set_normalized_param(input_mean, input_std, output_mean, output_std)
     model = train(model, train_loader, valid_loader, optimizer, loss_fn, early_stopping, max_training_epoch, goal_loss, is_plot=False)
     #
     # ### Get the predict output from test data and save to Matlab file
@@ -59,7 +60,6 @@ def loop_func(train_data_path, valid_data_path, test_data_path, use_net, robot,)
     # test_loss, abs_rms_vec, rel_rms_vec = evaluate_rms(model, loss_fn, test_data_path, input_scaler, output_scaler, device, verbose=True)
 
     # save model to "result/model" folder
-    model.set_normalized_param(input_mean, input_std, output_mean, output_std)
     test_dataset = load_data_dir(test_data_path, device=device, input_scaler=None, output_scaler=None, is_inputScale = False, is_outputScale = False)
     feature_mat = test_dataset.x_data.numpy()
     target_mat = test_dataset.y_data.numpy()
