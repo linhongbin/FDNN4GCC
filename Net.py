@@ -319,12 +319,10 @@ class DualNets_UDirection(torch.nn.Module):
 
     def forward(self, x):
         z = x[:,:self.dof*2]
-        delta_q = x[:,self.dof*2:]
+        u = x[:,self.dof*2:]
         tor_pos = self.pos_net(z)
         tor_neg = self.neg_net(z)
-        u_mat = torch.zeros(delta_q.shape).to(self.device)
-        u_mat[delta_q>0]=1
-        tor = tor_pos * u_mat + tor_neg * (1-u_mat)
+        tor = tor_pos * u + tor_neg * (1-u)
         return tor
 
     def set_normalized_param(self,input_mean, input_std, output_mean, output_std):

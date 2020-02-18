@@ -233,15 +233,7 @@ def load_preProcessData(train_data_dir, batch_size, device, valid_data_path = No
 
     # load data of teacher model
     if teacherModel is not None:
-        input_mat, output_mat = teacherModel.random_sampling_SinCosInput(teacher_sample_num)
-        teacher_input_mat = []
-        teacher_output_mat = []
-        # load .mat file to numpy
-        for file_name in data_list:
-            input = sio.loadmat(file_name)['input_mat']
-            output = sio.loadmat(file_name)['output_mat']
-            teacher_input_mat = input if len(teacher_input_mat) == 0 else np.concatenate((teacher_input_mat, input), axis=0)
-            teacher_output_mat = output if len(teacher_output_mat) == 0 else np.concatenate((teacher_output_mat, output), axis=0)
+        teacher_input_mat, teacher_output_mat = teacherModel.random_sampling_SinCosInput(teacher_sample_num)
 
 
     # caculate mean and std

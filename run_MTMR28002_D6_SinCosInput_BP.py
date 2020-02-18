@@ -1,5 +1,5 @@
 from regularizeTool import EarlyStopping
-from trainTool import train
+from trainTool import train,KDtrain
 from loadDataTool import load_preProcessData
 from os.path import join
 from evaluateTool import *
@@ -7,9 +7,10 @@ import scipy.io as sio
 from os import mkdir
 from loadModel import get_model, save_model
 from HyperParam import get_hyper_param
+from AnalyticalModel import *
 
-def loop_func(train_data_path, valid_data_path, test_data_path, use_net, robot,):
-    param_dict = get_hyper_param(robot)
+def loop_func(train_data_path, valid_data_path, test_data_path, use_net, robot, train_type='BP'):
+    param_dict = get_hyper_param(robot, train_type=train_type)
 
     max_training_epoch = param_dict['max_training_epoch'] # stop train when reach maximum training epoch
     goal_loss = param_dict['goal_loss'] # stop train when reach goal loss
@@ -22,10 +23,19 @@ def loop_func(train_data_path, valid_data_path, test_data_path, use_net, robot,)
 
     device = torch.device(device)
     model = get_model('MTM', use_net, D, device=device)
-    train_loader, valid_loader, _, input_mean, input_std, output_mean, output_std =load_preProcessData(join(train_data_path, "data"),
-                                                                                                       batch_size,
-                                                                                                       device,
-                                                                                                       valid_data_path=join(valid_data_path, "data"))
+    if train_type == 'BP':
+        train_loader, valid_loader, _, input_mean, input_std, output_mean, output_std =load_preProcessData(join(train_data_path, "data"),
+                                                                                                           batch_size,
+                                                                                                           device,
+                                                                                                           valid_data_path=join(valid_data_path, "data"))
+    elif train_type == 'PKD':
+        teacherModel = MTM_MLSE4POL()
+        train_loader, valid_loader, teacher_loader, input_mean, input_std, output_mean, output_std = load_preProcessData(join(train_data_path, "data"),
+                                                                                                                        batch_size,
+                                                                                                                        device,
+                                                                                                                        valid_data_path=join(valid_data_path, "data"),
+                                                                                                                        teacherModel=teacherModel,
+                                                                                                                        teacher_sample_num=param_dict['teacher_sample_num'])
 
 
     loss_fn = torch.nn.SmoothL1Loss()
@@ -34,7 +44,13 @@ def loop_func(train_data_path, valid_data_path, test_data_path, use_net, robot,)
 
     ### Train model
     model.set_normalized_param(input_mean, input_std, output_mean, output_std)
-    model = train(model, train_loader, valid_loader, optimizer, loss_fn, early_stopping, max_training_epoch, goal_loss, is_plot=False)
+    if train_type=='BP':
+        model = train(model, train_loader, valid_loader, optimizer, loss_fn, early_stopping, max_training_epoch, goal_loss, is_plot=False)
+    elif train_type == 'PKD':
+        model = KDtrain(model, train_loader, valid_loader, teacher_loader, optimizer, loss_fn, early_stopping,
+                        max_training_epoch, goal_loss, param_dict['initLamda'], param_dict['endLamda'], param_dict['decayStepsLamda'], is_plot=False)
+    else:
+        raise Exception("cannot recoginze the train type")
     #
     # ### Get the predict output from test data and save to Matlab file
     # train_dataset = load_data_dir(join(train_data_path,'data'), device='cpu', input_scaler=None, output_scaler=None, is_inputScale = False, is_outputScale = False)
@@ -101,5 +117,6 @@ def loop_func(train_data_path, valid_data_path, test_data_path, use_net, robot,)
 train_data_path = join("data", "MTMR_28002", "real", "uniform", "N4", 'D6_SinCosInput', "dual")
 valid_data_path = join("data", "MTMR_28002", "real", "uniform",  "N5", 'D6_SinCosInput', "dual")
 test_data_path = join("data", "MTMR_28002", "real", "random", 'N319','D6_SinCosInput')
-loop_func(train_data_path, valid_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002')
+loop_func(train_data_path, valid_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002', train_type='PKD')
+
 
