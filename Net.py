@@ -1,4 +1,5 @@
 import torch
+import numpy as np
 
 class PolNet(torch.nn.Module):
     def __init__(self, D_in, pol_dim,  device='cpu'):
@@ -335,7 +336,9 @@ class DualNets_UDirection(torch.nn.Module):
         for i in range(self.dof):
             self.output_std[i] = output_std[i]
 
-    def predict_NP(self, input_mat):
+    def predict_NP(self, x_mat):
+        # copy the array. prevent using same address
+        input_mat = np.array(x_mat)
         D = self.dof
         for i in range(D * 2):
             input_mat[:,i] = (input_mat[:,i] - self.input_mean[i].detach().numpy()) / self.input_std[i].detach().numpy()

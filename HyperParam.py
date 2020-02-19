@@ -13,8 +13,8 @@ def get_hyper_param(robot, use_net=None, train_type=None):
         param_dict['D'] = 6
 
         if train_type == 'PKD':
-            param_dict['teacher_sample_num'] = 20000
-            param_dict['initLamda'] = 3.2
+            param_dict['teacher_sample_num'] = 30000
+            param_dict['initLamda'] = 5
             param_dict['endLamda'] = 3
             param_dict['decayStepsLamda'] = 30
 

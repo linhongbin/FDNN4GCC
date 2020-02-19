@@ -297,19 +297,7 @@ class MTM_MLSE4POL():
 [         0,         0,                                     0,                                       0,                                                     0,                                                     0,                                                                                                                             0,                                                                                                                             0,                                                                                                                                                                                                                                     0,                                                                                                                                                                                                                                     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  0,    0,    0,    0, 0,  0,    0,    0,    0, 0,  0,    0,    0,    0, 0,  0,    0,    0,    0, 0,  0,    0,    0,    0, 0,  0,    0,    0,    0]])
 
         return R_mat
-    
-    def predict(self, input_mat):
-        output_mat = np.zeros((input_mat.shape[0], 5))
-        for i in range(input_mat.shape[0]):
-            q2 = input_mat[i,0]
-            q3 = input_mat[i,1]
-            q4 = input_mat[i,2]
-            q5 = input_mat[i,3]
-            q6 = input_mat[i,4]
-            R_mat = (self.regressor_pos(0, q2, q3, q4, q5, q6) + self.regressor_neg(0, q2, q3, q4, q5, q6))/2
-            tor = R_mat.dot(self.param_vec).reshape(7)
-            output_mat[i,:] = tor[1:-1]
-        return output_mat
+
 
     def random_model_sampling(self, sample_num, input_scaler=None, output_scaler=None, is_inputScale = False, is_outputScale = False):
         input_mat = np.zeros((sample_num, 5))
@@ -332,9 +320,13 @@ class MTM_MLSE4POL():
 
         return input_mat, output_mat, input_scaler, output_scaler
 
-    def predict_SinCosInput(self, q_mat, delta_q_mat):
+    def predict(self, input_mat):
         D = 6
-        output_mat = np.zeros((q_mat.shape[0], D))
+        tri_mat = input_mat[:,:D*2]
+        u_mat = input_mat[:,D*2:]
+        output_mat = np.zeros((tri_mat.shape[0], D))
+
+        q_mat = np.arctan2(tri_mat[:,:D], tri_mat[:,D:2*D])
         for i in range(q_mat.shape[0]):
             q1 = q_mat[i, 0]
             q2 = q_mat[i,1]
@@ -348,7 +340,7 @@ class MTM_MLSE4POL():
             tor_neg = R_neg.dot(self.param_vec).reshape(7)
             tor_pos = tor_pos[:-1]
             tor_neg = tor_neg[:-1]
-            u = delta_q_mat[i,:]
+            u = u_mat[i,:]
             tor = tor_pos * u + tor_neg * (1-u)
             output_mat[i,:] = tor
         return output_mat
@@ -360,12 +352,12 @@ class MTM_MLSE4POL():
             rand_arr = np.random.rand(D)
             q_mat[i, :] = rand_arr * (self.jnt_upper_limit - self.jnt_lower_limit) + self.jnt_lower_limit
 
-        delta_q_mat = np.zeros((sample_num, D))
+        u_mat = np.zeros((sample_num, D))
         for i in range(sample_num):
             rand_arr = np.random.rand(D)
             for j in range(D):
-                delta_q_mat[i, j] = 1 if rand_arr[j]>0.5 else 0
-        input_mat = np.concatenate((np.sin(q_mat), np.cos(q_mat), delta_q_mat), axis = 1)
+                u_mat[i, j] = 1 if rand_arr[j]>0.5 else 0
+        input_mat = np.concatenate((np.sin(q_mat), np.cos(q_mat), u_mat), axis = 1)
 
-        output_mat = self.predict_SinCosInput(q_mat, delta_q_mat)
+        output_mat = self.predict(input_mat)
         return input_mat, output_mat

@@ -76,7 +76,7 @@ def loop_func(train_data_path, valid_data_path, test_data_path, use_net, robot, 
     # test_loss, abs_rms_vec, rel_rms_vec = evaluate_rms(model, loss_fn, test_data_path, input_scaler, output_scaler, device, verbose=True)
 
     # save model to "result/model" folder
-    test_dataset = load_data_dir(test_data_path, device=device, input_scaler=None, output_scaler=None, is_inputScale = False, is_outputScale = False)
+    test_dataset = load_data_dir(join(test_data_path, "data"), device=device, input_scaler=None, output_scaler=None, is_inputScale = False, is_outputScale = False)
     feature_mat = test_dataset.x_data.numpy()
     target_mat = test_dataset.y_data.numpy()
     target_hat_mat = model.predict_NP(feature_mat)
@@ -95,7 +95,7 @@ def loop_func(train_data_path, valid_data_path, test_data_path, use_net, robot, 
         mkdir(model_save_path)
     except:
         print('Make directory: ', model_save_path + " already exist")
-    save_model(model_save_path, use_net, model)
+    save_model(model_save_path, use_net+'_'+train_type, model)
 
 
 ################################################################################################################
@@ -117,6 +117,8 @@ def loop_func(train_data_path, valid_data_path, test_data_path, use_net, robot, 
 train_data_path = join("data", "MTMR_28002", "real", "uniform", "N4", 'D6_SinCosInput', "dual")
 valid_data_path = join("data", "MTMR_28002", "real", "uniform",  "N5", 'D6_SinCosInput', "dual")
 test_data_path = join("data", "MTMR_28002", "real", "random", 'N319','D6_SinCosInput')
+
+loop_func(train_data_path, valid_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002', train_type='BP')
 loop_func(train_data_path, valid_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002', train_type='PKD')
 
 
