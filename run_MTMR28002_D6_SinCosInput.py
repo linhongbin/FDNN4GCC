@@ -9,7 +9,7 @@ from loadModel import get_model, save_model
 from HyperParam import get_hyper_param
 from AnalyticalModel import *
 
-def loop_func(train_data_path, valid_data_path, test_data_path, use_net, robot, train_type='BP'):
+def loop_func(train_data_path, test_data_path, use_net, robot, train_type='BP', valid_data_path=None):
     param_dict = get_hyper_param(robot, train_type=train_type)
 
     max_training_epoch = param_dict['max_training_epoch'] # stop train when reach maximum training epoch
@@ -27,13 +27,15 @@ def loop_func(train_data_path, valid_data_path, test_data_path, use_net, robot, 
         train_loader, valid_loader, _, input_mean, input_std, output_mean, output_std =load_preProcessData(join(train_data_path, "data"),
                                                                                                            batch_size,
                                                                                                            device,
-                                                                                                           valid_data_path=join(valid_data_path, "data"))
+                                                                                                           valid_ratio=param_dict['valid_ratio'],
+                                                                                                           valid_data_path=join(valid_data_path, "data") if valid_data_path is not None else None)
     elif train_type == 'PKD':
         teacherModel = MTM_MLSE4POL()
         train_loader, valid_loader, teacher_loader, input_mean, input_std, output_mean, output_std = load_preProcessData(join(train_data_path, "data"),
                                                                                                                         batch_size,
                                                                                                                         device,
-                                                                                                                        valid_data_path=join(valid_data_path, "data"),
+                                                                                                                        valid_ratio=param_dict['valid_ratio'],
+                                                                                                                        valid_data_path=join(valid_data_path, "data") if valid_data_path is not None else None,
                                                                                                                         teacherModel=teacherModel,
                                                                                                                         teacher_sample_num=param_dict['teacher_sample_num'])
 
@@ -113,12 +115,17 @@ def loop_func(train_data_path, valid_data_path, test_data_path, use_net, robot, 
 #     test_data_path = join("data", "MTMR_28002", "real", "random","D5N10")
 #     loop_func(train_data_path, test_data_path, use_net)
 
-# test
+#test
 train_data_path = join("data", "MTMR_28002", "real", "uniform", "N4", 'D6_SinCosInput', "dual")
 valid_data_path = join("data", "MTMR_28002", "real", "uniform",  "N5", 'D6_SinCosInput', "dual")
 test_data_path = join("data", "MTMR_28002", "real", "random", 'N319','D6_SinCosInput')
+# loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002', train_type='BP', valid_data_path=valid_data_path)
+loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002', train_type='PKD', valid_data_path= valid_data_path)
 
-loop_func(train_data_path, valid_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002', train_type='BP')
-loop_func(train_data_path, valid_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002', train_type='PKD')
+# train_data_path = join("data", "MTMR_28002", "real", "uniform", "N4andN5", 'D6_SinCosInput', "dual")
+# test_data_path = join("data", "MTMR_28002", "real", "random", 'N319','D6_SinCosInput')
+# loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002', train_type='BP')
+# loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002', train_type='PKD')
+
 
 

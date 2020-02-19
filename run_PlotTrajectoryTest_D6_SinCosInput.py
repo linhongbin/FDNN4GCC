@@ -6,8 +6,11 @@ from evaluateTool import *
 import scipy.io as sio
 from os import mkdir
 from loadModel import get_model, load_model
+import matplotlib
+matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from AnalyticalModel import *
+import numpy as np
 
 
 
@@ -48,7 +51,7 @@ load_model_path = join(train_data_path, "result", "model")
 model = get_model('MTM', use_net, D, device=device)
 model, _, _ = load_model(load_model_path, use_net+'_'+train_type, model)
 test_output_hat_mat_List.append(model.predict_NP(test_input_mat))
-legend_list.append('ReLU Net with BP')
+legend_list.append('DFNN with BP')
 
 
 # get predict DNN with Knowledge Distillation output
@@ -58,49 +61,85 @@ load_model_path = join(train_data_path, "result", "model")
 model = get_model('MTM', use_net, D, device=device)
 model, _, _ = load_model(load_model_path, use_net+'_'+train_type, model)
 test_output_hat_mat_List.append(model.predict_NP(test_input_mat))
-legend_list.append('ReLU Net with PKD')
+legend_list.append('DFNN with PKD')
 
 
 
 # plot predict error bar figures
-mean_list = []
-std_list = []
+abs_rms_list = []
+rel_rms_list = []
+mean_rel_rms_list = []
 for i in range(len(test_output_hat_mat_List)):
     err_output_mat = np.abs(test_output_hat_mat_List[i] - test_ouput_mat)
-    mean_list.append(np.mean(err_output_mat, axis=0).tolist())
-    std_list.append(np.std(err_output_mat, axis=0).tolist())
+    abs_rms_list.append(np.sqrt(np.mean(np.square(err_output_mat), axis=0)).tolist())
+    rel_rms_list.append(np.sqrt(np.divide(np.mean(np.square(err_output_mat), axis=0),
+                                    np.mean(np.square(test_ouput_mat), axis=0))).tolist())
+
+for i in range(len(rel_rms_list)):
+    abs_rms_list[i].append(np.mean(abs_rms_list[i], axis=0))
+    rel_rms_list[i].append(np.mean(rel_rms_list[i],axis=0))
 
 
 #print(err_output_mat)
 
 
 
-jnt_index = np.arange(1,7)
-
-
+jnt_index = np.arange(1,8)
 fig, ax = plt.subplots()
-w = 0.1
-space = 0.1
+w = 0.2
+space = 0.2
 capsize = 2
-for i in range(len(mean_list)):
-    ax.bar(jnt_index+space*(i-1), mean_list[i], yerr=std_list[i],  width=w,align='center', alpha=0.5, ecolor='black', capsize=capsize, label=legend_list[i])
-ax.set_ylabel(r'$|\tau_{e}|$')
+fontsize = 30
+
+for i in range(len(abs_rms_list)):
+    ax.bar(jnt_index+space*(i-1), abs_rms_list[i],  width=w,align='center', alpha=0.5, ecolor='black', capsize=capsize, label=legend_list[i])
+
 ax.set_xticks(jnt_index)
-ax.set_xticklabels(['Joint '+str(i) for i in jnt_index.tolist()])
-ax.set_title('Absolute Predicted Torque Error for Trajectory Test')
+labels = ['Joint '+str(i+1) for i in range(6)]
+labels.append('Avg')
+# ax.set_title('Absolute RMSE for Trajectory Test')
 ax.yaxis.grid(True)
 ax.autoscale(tight=True)
-ax.legend()
+maxValue = max([max(list) for list in abs_rms_list])
+plt.ylim(0, maxValue*1.2)
 
 # Save the figure and show
+ax.set_xticklabels(labels, fontsize=14)
+ax.set_ylabel(r'$\epsilon_{rms}$', fontsize=14)
+ax.legend(fontsize=14)
+plt.xticks(fontsize=14)
+plt.yticks(fontsize=14)
 plt.tight_layout()
-#plt.savefig('TrajTest_AbsErr.png')
 plt.show()
+fig.savefig(join(train_data_path, "result",'TrajTest_AbsRMS.pdf'),bbox_inches='tight')
 
 
 
+jnt_index = np.arange(1,8)
+fig, ax = plt.subplots()
+w = 0.2
+space = 0.2
+capsize = 2
+fontsize = 30
 
+for i in range(len(rel_rms_list)):
+    ax.bar(jnt_index+space*(i-1), rel_rms_list[i],  width=w,align='center', alpha=0.5, ecolor='black', capsize=capsize, label=legend_list[i])
 
+ax.set_xticks(jnt_index)
+labels = ['Joint '+str(i+1) for i in range(6)]
+labels.append('Avg')
+# ax.set_title('Absolute RMSE for Trajectory Test')
+ax.yaxis.grid(True)
+ax.autoscale(tight=True)
+maxValue = max([max(list) for list in rel_rms_list])
+plt.ylim(0, maxValue*1.2)
 
-
-
+# Save the figure and show
+ax.set_xticklabels(labels, fontsize=14)
+ax.set_ylabel(r'$\epsilon_{rms}\%$', fontsize=14)
+ax.legend(fontsize=14)
+plt.xticks(fontsize=14)
+plt.yticks(fontsize=14)
+plt.tight_layout()
+plt.show()
+fig.savefig(join(train_data_path, "result",'TrajTest_RelRMS.pdf'),bbox_inches='tight')
