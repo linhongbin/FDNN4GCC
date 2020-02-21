@@ -63,16 +63,16 @@ class MTM_CAD():
         self.jnt_lower_limit = np.radians(np.array([-14, -34, -80, -85, -40]))
 
     def predict(self, input_mat):
-        output_mat = np.zeros((input_mat.shape[0], 5))
+        output_mat = np.zeros((input_mat.shape[0], 6))
         for i in range(input_mat.shape[0]):
-            q2 = input_mat[i,0]
-            q3 = input_mat[i,1]
-            q4 = input_mat[i,2]
-            q5 = input_mat[i,3]
-            q6 = input_mat[i,4]
+            q2 = input_mat[i,1]
+            q3 = input_mat[i,2]
+            q4 = input_mat[i,3]
+            q5 = input_mat[i,4]
+            q6 = input_mat[i,5]
             R_mat = self.regressor(q2, q3, q4, q5, q6)
             tor = R_mat.dot(self.param_vec).reshape(7)
-            output_mat[i,:] = tor[1:-1]
+            output_mat[i,:] = tor[:-1]
         return output_mat
 
     def regressor(self, q2, q3, q4, q5, q6):

@@ -143,3 +143,7 @@ plt.yticks(fontsize=14)
 plt.tight_layout()
 plt.show()
 fig.savefig(join(train_data_path, "result",'TrajTest_RelRMS.pdf'),bbox_inches='tight')
+
+
+print('Avg Absolute RMSE: ',[lst[-1] for lst in abs_rms_list])
+print('Avg Relative RMSE: ',[lst[-1] for lst in rel_rms_list])

@@ -33,7 +33,7 @@ for idx1 = 1:size(X1,2)
             end
             count = count +1;
             file_name = sprintf('MTMR_CAD_sim_%d.mat', count);
-            %save(fullfile('data' ,file_name), 'input_mat', 'output_mat')
+            save(file_name, 'input_mat', 'output_mat')
             input_mat = [];
             output_mat = [];
         end
