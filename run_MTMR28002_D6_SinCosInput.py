@@ -134,7 +134,8 @@ def loop_func(train_data_path, test_data_path, use_net, robot, train_type='BP', 
 # train_simulate_num_list = [100,500,1000,5000, 10000, 30000]
 train_simulate_num_list = [10, 50, 100,500,1000, 5000]
 test_simulate_num = 20000
-DistScale = 0.02
+# DistScale = 0.02
+DistScale = 1
 save_dir = join("data", "MTMR_28002", "sim", "random", 'Dist_'+str(DistScale))
 repetitive_num = 4
 

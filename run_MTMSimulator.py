@@ -149,7 +149,9 @@ def generate_data(param_load_path, simulate_num, repetitive_num = 10, data_type=
 
 save_dir = join("data", "MTMR_28002", "sim", "random", 'N30000','D6_SinCosInput')
 
-DistScale = 0.02
+# DistScale = 0.02
+
+DistScale = 1
 simulate_num = 1000
 repetitive_num = 4
 

@@ -100,8 +100,11 @@ def cal_baselines_rms(train_data_path, test_data_path):
 
 train_simulate_num_list = [10, 50, 100,500,1000, 5000]
 repetitive_num = 4
-DistScale = 0.02
+# DistScale = 0.02
+DistScale = 1
 baseline_num = 3
+font_size = 20
+legend_size = 17
 
 abs_rms_mean_arr_list = []
 rel_rms_mean_arr_list = []
@@ -146,14 +149,14 @@ for i in range(baseline_num):
     plt.plot(x_arr, y_arr, '-', color= fill_color_list[i])
     plt.fill_between(x_arr, y_arr-y_err_arr, y_arr+y_err_arr, alpha=0.5, facecolor=fill_color_list[i], label=legend_list[i])
 
-plt.legend(loc='upper right',fontsize=14)
-
-plt.ylabel(r'$\epsilon_{rms}$', fontsize=14)
+plt.legend(loc='upper right',fontsize=legend_size)
+plt.xlabel(r'$T^{s}$', fontsize=font_size)
+plt.ylabel(r'$\epsilon_{rms}$', fontsize=font_size)
 plt.xscale('log')
-ax.tick_params(axis='both', which='major', labelsize=14)
-ax.tick_params(axis='both', which='minor', labelsize=14)
+ax.tick_params(axis='both', which='major', labelsize=font_size)
+ax.tick_params(axis='both', which='minor', labelsize=font_size)
 
-plt.yticks(fontsize=14)
+plt.yticks(fontsize=font_size)
 plt.tight_layout()
 ax.yaxis.grid(True)
 # ax.autoscale(tight=True)
@@ -161,7 +164,7 @@ ax.yaxis.grid(True)
 plt.show()
 save_dir = join("data", "MTMR_28002", "sim", 'random', 'Dist_'+str(DistScale), 'train', "result")
 Path(save_dir).mkdir(parents=True, exist_ok=True)
-fig.savefig(join(save_dir,'OfflineTest_AbsRMS.pdf'),bbox_inches='tight')
+fig.savefig(join(save_dir,'Dist_'+str(DistScale)+'_OfflineTest_AbsRMS.pdf'),bbox_inches='tight')
 
 
 
@@ -179,21 +182,22 @@ for i in range(baseline_num):
     plt.plot(x_arr, y_arr, '-', color= fill_color_list[i])
     plt.fill_between(x_arr, y_arr-y_err_arr, y_arr+y_err_arr, alpha=0.5, facecolor=fill_color_list[i], label=legend_list[i])
 
-plt.legend(loc='upper right',fontsize=14)
+plt.legend(loc='upper right',fontsize=legend_size)
 
-plt.ylabel(r'$\epsilon_{rms}\%$', fontsize=14)
+plt.xlabel(r'$T^{s}$', fontsize=font_size)
+plt.ylabel(r'$\epsilon_{rms}\%$', fontsize=font_size)
 plt.xscale('log')
-ax.tick_params(axis='both', which='major', labelsize=14)
-ax.tick_params(axis='both', which='minor', labelsize=14)
+ax.tick_params(axis='both', which='major', labelsize=font_size)
+ax.tick_params(axis='both', which='minor', labelsize=font_size)
 
-plt.yticks(fontsize=14)
+plt.yticks(fontsize=font_size)
 plt.tight_layout()
 
 
 plt.show()
 save_dir = join("data", "MTMR_28002", "sim", 'random', 'Dist_'+str(DistScale), 'train', "result")
 Path(save_dir).mkdir(parents=True, exist_ok=True)
-fig.savefig(join(save_dir,'OfflineTest_RelRMS.pdf'),bbox_inches='tight')
+fig.savefig(join(save_dir,'Dist_'+str(DistScale)+'_OfflineTest_RelRMS.pdf'),bbox_inches='tight')
 
 
 #print(err_output_mat)
@@ -220,11 +224,11 @@ fig.savefig(join(save_dir,'OfflineTest_RelRMS.pdf'),bbox_inches='tight')
 # plt.ylim(0, maxValue*1.2)
 #
 # # Save the figure and show
-# ax.set_xticklabels(labels, fontsize=14)
-# ax.set_ylabel(r'$\epsilon_{rms}$', fontsize=14)
-# ax.legend(fontsize=14)
-# plt.xticks(fontsize=14)
-# plt.yticks(fontsize=14)
+# ax.set_xticklabels(labels, fontsize=font_size)
+# ax.set_ylabel(r'$\epsilon_{rms}$', fontsize=font_size)
+# ax.legend(fontsize=font_size)
+# plt.xticks(fontsize=font_size)
+# plt.yticks(fontsize=font_size)
 # plt.tight_layout()
 # plt.show()
 # fig.savefig(join(train_data_path, "result",'TrajTest_AbsRMS.pdf'),bbox_inches='tight')
@@ -251,11 +255,11 @@ fig.savefig(join(save_dir,'OfflineTest_RelRMS.pdf'),bbox_inches='tight')
 # plt.ylim(0, maxValue*1.2)
 #
 # # Save the figure and show
-# ax.set_xticklabels(labels, fontsize=14)
-# ax.set_ylabel(r'$\epsilon_{rms}\%$', fontsize=14)
-# ax.legend(fontsize=14)
-# plt.xticks(fontsize=14)
-# plt.yticks(fontsize=14)
+# ax.set_xticklabels(labels, fontsize=font_size)
+# ax.set_ylabel(r'$\epsilon_{rms}\%$', fontsize=font_size)
+# ax.legend(fontsize=font_size)
+# plt.xticks(fontsize=font_size)
+# plt.yticks(fontsize=font_size)
 # plt.tight_layout()
 # plt.show()
 # fig.savefig(join(train_data_path, "result",'TrajTest_RelRMS.pdf'),bbox_inches='tight')
