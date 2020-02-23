@@ -59,17 +59,25 @@ class MTM_CAD():
         param_vec[13-1, 0] = E5
         param_vec[14-1, 0] = drift5
         self.param_vec = param_vec
-        self.jnt_upper_limit =  np.radians(np.array([45, 34, 190, 175, 40]))
-        self.jnt_lower_limit = np.radians(np.array([-14, -34, -80, -85, -40]))
+        self.jnt_upper_limit =  np.radians(np.array([40, 45, 34, 190, 175, 40]))
+        self.jnt_lower_limit = np.radians(np.array([-40, -14, -34, -80, -85, -40]))
 
     def predict(self, input_mat):
+        D = 6
         output_mat = np.zeros((input_mat.shape[0], 6))
+        if input_mat.shape[1] == D*3:
+            q_mat = np.arctan2(input_mat[:, :D], input_mat[:, D:2 * D])
+        elif input_mat.shape[1] == D:
+            q_mat = input_mat
+        else:
+            raise Exception('Dimension is not correct')
+
         for i in range(input_mat.shape[0]):
-            q2 = input_mat[i,1]
-            q3 = input_mat[i,2]
-            q4 = input_mat[i,3]
-            q5 = input_mat[i,4]
-            q6 = input_mat[i,5]
+            q2 = q_mat[i,1]
+            q3 = q_mat[i,2]
+            q4 = q_mat[i,3]
+            q5 = q_mat[i,4]
+            q6 = q_mat[i,5]
             R_mat = self.regressor(q2, q3, q4, q5, q6)
             tor = R_mat.dot(self.param_vec).reshape(7)
             output_mat[i,:] = tor[:-1]
@@ -88,113 +96,22 @@ class MTM_CAD():
                   [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
         return R_mat
 
-class MTM_FK():
-    def __init__(self):
-        self.jnt_upper_limit =  np.radians(np.array([45, 34, 190, 175, 40]))
-        self.jnt_lower_limit = np.radians(np.array([-14, -34, -80, -85, -40]))
-
-    def fk_vec(self, q2,q3,q4,q5,q6):
-        cm2_x = -0.38
-        cm2_y = 0.00
-        cm2_z = 0.00
-        m2 = 0.65
-
-        cm3_x = -0.25
-        cm3_y = 0.00
-        cm3_z = 0.00
-        m3 = 0.04
-
-        cm4_x = 0.0
-        cm4_y = -0.084
-        cm4_z = -0.12
-        m4 = 0.14
-
-        cm5_x = 0.0
-        cm5_y = 0.036
-        cm5_z = -0.065
-        m5 = 0.04
-
-        cm6_x = 0.0
-        cm6_y = -0.025
-        cm6_z = 0.05
-        m6 = 0.05
-
-        L2 = 0.2794
-        L3 = 0.3645
-        L4_z0 = 0.1506
-
-        # might not accurate
-        L3_parallel = 0
-        cm1_x = 0
-        cm1_z = 0
-        cm1_y = 0
-
-        cm4_parallel_x = 0
-        cm4_parallel_y = 0
-        cm4_parallel_z = 0
-
-        cm5_parallel_x = 0
-        cm5_parallel_y = 0
-        cm5_parallel_z = 0
-
-        q1 = 0
-        fk_vec = np.array([L2 * sin(q1) * sin(q2) - cm2_z * cos(q1) + cm2_y * cos(q2) * sin(q1) + cm2_x * sin(q1) * sin(q2),
-- cm2_z * sin(q1) - L2 * cos(q1) * sin(q2) - cm2_y * cos(q1) * cos(q2) - cm2_x * cos(q1) * sin(q2),
-cm2_y * sin(q2) - cm2_x * cos(q2) - L2 * cos(q2),
-cm3_y * cos(q1) + L2 * sin(q1) * sin(q2) + L3 * cos(q2) * cos(q3) * sin(q1) + cm3_x * cos(q2) * cos(q3) * sin(q1) - L3 * sin(q1) * sin(q2) * sin(q3) - cm3_z * cos(q2) * sin(q1) * sin(q3) - cm3_z * cos(q3) * sin(q1) * sin(q2) - cm3_x * sin(q1) * sin(q2) * sin(q3),
-cm3_y * sin(q1) - L2 * cos(q1) * sin(q2) - L3 * cos(q1) * cos(q2) * cos(q3) - cm3_x * cos(q1) * cos(q2) * cos(q3) + L3 * cos(q1) * sin(q2) * sin(q3) + cm3_z * cos(q1) * cos(q2) * sin(q3) + cm3_z * cos(q1) * cos(q3) * sin(q2) + cm3_x * cos(q1) * sin(q2) * sin(q3),
-L3 * sin(q2 + q3) + cm3_z * cos(q2 + q3) + cm3_x * sin(q2 + q3) - L2 * cos(q2),
-L2 * sin(q1) * sin(q2) - cm4_z * cos(q1) * cos(q4) + cm4_x * cos(q1) * sin(q4) + L3 * cos(q2) * cos(q3) * sin(q1) - L4_z0 * cos(q2) * sin(q1) * sin(q3) - L4_z0 * cos(q3) * sin(q1) * sin(q2) - L3 * sin(q1) * sin(q2) * sin(q3) - cm4_y * cos(q2) * sin(q1) * sin(q3) - cm4_y * cos(q3) * sin(q1) * sin(q2) + cm4_x * cos(q2) * cos(q3) * cos(q4) * sin(q1) + cm4_z * cos(q2) * cos(q3) * sin(q1) * sin(q4) - cm4_x * cos(q4) * sin(q1) * sin(q2) * sin(q3) - cm4_z * sin(q1) * sin(q2) * sin(q3) * sin(q4),
-cm4_x * sin(q1) * sin(q4) - cm4_z * cos(q4) * sin(q1) - L2 * cos(q1) * sin(q2) - L3 * cos(q1) * cos(q2) * cos(q3) + L4_z0 * cos(q1) * cos(q2) * sin(q3) + L4_z0 * cos(q1) * cos(q3) * sin(q2) + L3 * cos(q1) * sin(q2) * sin(q3) + cm4_y * cos(q1) * cos(q2) * sin(q3) + cm4_y * cos(q1) * cos(q3) * sin(q2) - cm4_x * cos(q1) * cos(q2) * cos(q3) * cos(q4) - cm4_z * cos(q1) * cos(q2) * cos(q3) * sin(q4) + cm4_x * cos(q1) * cos(q4) * sin(q2) * sin(q3) + cm4_z * cos(q1) * sin(q2) * sin(q3) * sin(q4),
-(cm4_z * cos(q2 + q3 - q4)) / 2 + (cm4_x * sin(q2 + q3 - q4)) / 2 + L4_z0 * cos(q2 + q3) + L3 * sin(q2 + q3) + cm4_y * cos(q2 + q3) - L2 * cos(q2) - (cm4_z * cos(q2 + q3 + q4)) / 2 + (cm4_x * sin(q2 + q3 + q4)) / 2,
-cm5_y * cos(q1) * cos(q4) + L2 * sin(q1) * sin(q2) + L3 * cos(q2) * cos(q3) * sin(q1) - L4_z0 * cos(q2) * sin(q1) * sin(q3) - L4_z0 * cos(q3) * sin(q1) * sin(q2) + cm5_x * cos(q1) * cos(q5) * sin(q4) - L3 * sin(q1) * sin(q2) * sin(q3) - cm5_z * cos(q1) * sin(q4) * sin(q5) - cm5_y * cos(q2) * cos(q3) * sin(q1) * sin(q4) - cm5_z * cos(q2) * cos(q5) * sin(q1) * sin(q3) - cm5_z * cos(q3) * cos(q5) * sin(q1) * sin(q2) - cm5_x * cos(q2) * sin(q1) * sin(q3) * sin(q5) - cm5_x * cos(q3) * sin(q1) * sin(q2) * sin(q5) + cm5_y * sin(q1) * sin(q2) * sin(q3) * sin(q4) - cm5_z * cos(q2) * cos(q3) * cos(q4) * sin(q1) * sin(q5) - cm5_x * cos(q4) * cos(q5) * sin(q1) * sin(q2) * sin(q3) + cm5_z * cos(q4) * sin(q1) * sin(q2) * sin(q3) * sin(q5) + cm5_x * cos(q2) * cos(q3) * cos(q4) * cos(q5) * sin(q1),
-cm5_y * cos(q4) * sin(q1) - L2 * cos(q1) * sin(q2) - L3 * cos(q1) * cos(q2) * cos(q3) + L4_z0 * cos(q1) * cos(q2) * sin(q3) + L4_z0 * cos(q1) * cos(q3) * sin(q2) + L3 * cos(q1) * sin(q2) * sin(q3) + cm5_x * cos(q5) * sin(q1) * sin(q4) - cm5_z * sin(q1) * sin(q4) * sin(q5) + cm5_y * cos(q1) * cos(q2) * cos(q3) * sin(q4) + cm5_z * cos(q1) * cos(q2) * cos(q5) * sin(q3) + cm5_z * cos(q1) * cos(q3) * cos(q5) * sin(q2) + cm5_x * cos(q1) * cos(q2) * sin(q3) * sin(q5) + cm5_x * cos(q1) * cos(q3) * sin(q2) * sin(q5) - cm5_y * cos(q1) * sin(q2) * sin(q3) * sin(q4) + cm5_x * cos(q1) * cos(q4) * cos(q5) * sin(q2) * sin(q3) - cm5_z * cos(q1) * cos(q4) * sin(q2) * sin(q3) * sin(q5) - cm5_x * cos(q1) * cos(q2) * cos(q3) * cos(q4) * cos(q5) + cm5_z * cos(q1) * cos(q2) * cos(q3) * cos(q4) * sin(q5),
-L4_z0 * cos(q2) * cos(q3) - L2 * cos(q2) + L3 * cos(q2) * sin(q3) + L3 * cos(q3) * sin(q2) - L4_z0 * sin(q2) * sin(q3) + cm5_z * cos(q2) * cos(q3) * cos(q5) + cm5_x * cos(q2) * cos(q3) * sin(q5) - cm5_y * cos(q2) * sin(q3) * sin(q4) - cm5_y * cos(q3) * sin(q2) * sin(q4) - cm5_z * cos(q5) * sin(q2) * sin(q3) - cm5_x * sin(q2) * sin(q3) * sin(q5) + cm5_x * cos(q2) * cos(q4) * cos(q5) * sin(q3) + cm5_x * cos(q3) * cos(q4) * cos(q5) * sin(q2) - cm5_z * cos(q2) * cos(q4) * sin(q3) * sin(q5) - cm5_z * cos(q3) * cos(q4) * sin(q2) * sin(q5),
-L2 * sin(q1) * sin(q2) + L3 * cos(q2) * cos(q3) * sin(q1) - cm6_x * cos(q1) * cos(q4) * cos(q6) - L4_z0 * cos(q2) * sin(q1) * sin(q3) - L4_z0 * cos(q3) * sin(q1) * sin(q2) - cm6_z * cos(q1) * cos(q4) * sin(q6) - L3 * sin(q1) * sin(q2) * sin(q3) - cm6_y * cos(q1) * sin(q4) * sin(q5) - cm6_z * cos(q1) * cos(q5) * cos(q6) * sin(q4) - cm6_y * cos(q2) * cos(q5) * sin(q1) * sin(q3) - cm6_y * cos(q3) * cos(q5) * sin(q1) * sin(q2) + cm6_x * cos(q1) * cos(q5) * sin(q4) * sin(q6) + cm6_x * cos(q2) * cos(q3) * cos(q6) * sin(q1) * sin(q4) - cm6_y * cos(q2) * cos(q3) * cos(q4) * sin(q1) * sin(q5) + cm6_z * cos(q2) * cos(q3) * sin(q1) * sin(q4) * sin(q6) + cm6_z * cos(q2) * cos(q6) * sin(q1) * sin(q3) * sin(q5) + cm6_z * cos(q3) * cos(q6) * sin(q1) * sin(q2) * sin(q5) - cm6_x * cos(q6) * sin(q1) * sin(q2) * sin(q3) * sin(q4) + cm6_y * cos(q4) * sin(q1) * sin(q2) * sin(q3) * sin(q5) - cm6_x * cos(q2) * sin(q1) * sin(q3) * sin(q5) * sin(q6) - cm6_x * cos(q3) * sin(q1) * sin(q2) * sin(q5) * sin(q6) - cm6_z * sin(q1) * sin(q2) * sin(q3) * sin(q4) * sin(q6) - cm6_z * cos(q2) * cos(q3) * cos(q4) * cos(q5) * cos(q6) * sin(q1) + cm6_x * cos(q2) * cos(q3) * cos(q4) * cos(q5) * sin(q1) * sin(q6) + cm6_z * cos(q4) * cos(q5) * cos(q6) * sin(q1) * sin(q2) * sin(q3) - cm6_x * cos(q4) * cos(q5) * sin(q1) * sin(q2) * sin(q3) * sin(q6),
-L4_z0 * cos(q1) * cos(q2) * sin(q3) - L3 * cos(q1) * cos(q2) * cos(q3) - L2 * cos(q1) * sin(q2) + L4_z0 * cos(q1) * cos(q3) * sin(q2) + L3 * cos(q1) * sin(q2) * sin(q3) - cm6_x * cos(q4) * cos(q6) * sin(q1) - cm6_z * cos(q4) * sin(q1) * sin(q6) - cm6_y * sin(q1) * sin(q4) * sin(q5) + cm6_y * cos(q1) * cos(q2) * cos(q5) * sin(q3) + cm6_y * cos(q1) * cos(q3) * cos(q5) * sin(q2) - cm6_z * cos(q5) * cos(q6) * sin(q1) * sin(q4) + cm6_x * cos(q5) * sin(q1) * sin(q4) * sin(q6) - cm6_z * cos(q1) * cos(q2) * cos(q3) * sin(q4) * sin(q6) - cm6_z * cos(q1) * cos(q2) * cos(q6) * sin(q3) * sin(q5) - cm6_z * cos(q1) * cos(q3) * cos(q6) * sin(q2) * sin(q5) + cm6_x * cos(q1) * cos(q6) * sin(q2) * sin(q3) * sin(q4) - cm6_y * cos(q1) * cos(q4) * sin(q2) * sin(q3) * sin(q5) + cm6_x * cos(q1) * cos(q2) * sin(q3) * sin(q5) * sin(q6) + cm6_x * cos(q1) * cos(q3) * sin(q2) * sin(q5) * sin(q6) + cm6_z * cos(q1) * sin(q2) * sin(q3) * sin(q4) * sin(q6) - cm6_x * cos(q1) * cos(q2) * cos(q3) * cos(q6) * sin(q4) + cm6_y * cos(q1) * cos(q2) * cos(q3) * cos(q4) * sin(q5) + cm6_z * cos(q1) * cos(q2) * cos(q3) * cos(q4) * cos(q5) * cos(q6) - cm6_x * cos(q1) * cos(q2) * cos(q3) * cos(q4) * cos(q5) * sin(q6) - cm6_z * cos(q1) * cos(q4) * cos(q5) * cos(q6) * sin(q2) * sin(q3) + cm6_x * cos(q1) * cos(q4) * cos(q5) * sin(q2) * sin(q3) * sin(q6),
-L4_z0 * cos(q2) * cos(q3) - L2 * cos(q2) + L3 * cos(q2) * sin(q3) + L3 * cos(q3) * sin(q2) - L4_z0 * sin(q2) * sin(q3) + cm6_y * cos(q2) * cos(q3) * cos(q5) - cm6_y * cos(q5) * sin(q2) * sin(q3) - cm6_z * cos(q2) * cos(q3) * cos(q6) * sin(q5) + cm6_x * cos(q2) * cos(q6) * sin(q3) * sin(q4) + cm6_x * cos(q3) * cos(q6) * sin(q2) * sin(q4) - cm6_y * cos(q2) * cos(q4) * sin(q3) * sin(q5) - cm6_y * cos(q3) * cos(q4) * sin(q2) * sin(q5) + cm6_x * cos(q2) * cos(q3) * sin(q5) * sin(q6) + cm6_z * cos(q2) * sin(q3) * sin(q4) * sin(q6) + cm6_z * cos(q3) * sin(q2) * sin(q4) * sin(q6) + cm6_z * cos(q6) * sin(q2) * sin(q3) * sin(q5) - cm6_x * sin(q2) * sin(q3) * sin(q5) * sin(q6) + cm6_x * cos(q2) * cos(q4) * cos(q5) * sin(q3) * sin(q6) + cm6_x * cos(q3) * cos(q4) * cos(q5) * sin(q2) * sin(q6) - cm6_z * cos(q2) * cos(q4) * cos(q5) * cos(q6) * sin(q3) - cm6_z * cos(q3) * cos(q4) * cos(q5) * cos(q6) * sin(q2),
-L3_parallel * cos(q2) * cos(q3) * sin(q1) - cm4_parallel_y * cos(q2) * sin(q1) - cm4_parallel_x * sin(q1) * sin(q2) - cm4_parallel_z * cos(q1) - L3_parallel * sin(q1) * sin(q2) * sin(q3),
-cm4_parallel_y * cos(q1) * cos(q2) - cm4_parallel_z * sin(q1) + cm4_parallel_x * cos(q1) * sin(q2) - L3_parallel * cos(q1) * cos(q2) * cos(q3) + L3_parallel * cos(q1) * sin(q2) * sin(q3),
-L3_parallel * sin(q2 + q3) + cm4_parallel_x * cos(q2) - cm4_parallel_y * sin(q2),
-L3_parallel * cos(q2) * cos(q3) * sin(q1) - cm5_parallel_z * cos(q1) - cm5_parallel_y * cos(q2) * cos(q3) * sin(q1) - L3_parallel * sin(q1) * sin(q2) * sin(q3) - cm5_parallel_x * cos(q2) * sin(q1) * sin(q3) - cm5_parallel_x * cos(q3) * sin(q1) * sin(q2) + cm5_parallel_y * sin(q1) * sin(q2) * sin(q3),
-cm5_parallel_y * cos(q1) * cos(q2) * cos(q3) - L3_parallel * cos(q1) * cos(q2) * cos(q3) - cm5_parallel_z * sin(q1) + L3_parallel * cos(q1) * sin(q2) * sin(q3) + cm5_parallel_x * cos(q1) * cos(q2) * sin(q3) + cm5_parallel_x * cos(q1) * cos(q3) * sin(q2) - cm5_parallel_y * cos(q1) * sin(q2) * sin(q3),
-L3_parallel * sin(q2 + q3) + cm5_parallel_x * cos(q2 + q3) - cm5_parallel_y * sin(q2 + q3)])
-        return fk_vec
-
-
-    def predict(self, input_mat):
-        output_mat = np.zeros((input_mat.shape[0], 21))
-        for i in range(input_mat.shape[0]):
-            q2 = input_mat[i,0]
-            q3 = input_mat[i,1]
-            q4 = input_mat[i,2]
-            q5 = input_mat[i,3]
-            q6 = input_mat[i,4]
-            output_mat[i,:] = self.fk_vec(q2,q3,q4,q5,q6)
-        return output_mat
-
-    def random_model_sampling(self, sample_num, input_scaler=None, output_scaler=None, is_inputScale = False, is_outputScale = False):
-        inputDim = 5
-        input_mat = np.zeros((sample_num, inputDim))
+    def random_sampling_SinCosInput(self, sample_num):
+        D = 6
+        q_mat = np.zeros((sample_num, D))
         for i in range(sample_num):
-            rand_arr = np.random.rand(inputDim)
-            input_mat[i,:] = rand_arr*(self.jnt_upper_limit-self.jnt_lower_limit) + self.jnt_lower_limit
+            rand_arr = np.random.rand(D)
+            q_mat[i, :] = rand_arr * (self.jnt_upper_limit - self.jnt_lower_limit) + self.jnt_lower_limit
+
+        u_mat = np.zeros((sample_num, D))
+        for i in range(sample_num):
+            rand_arr = np.random.rand(D)
+            for j in range(D):
+                u_mat[i, j] = 1 if rand_arr[j]>0.5 else 0
+        input_mat = np.concatenate((np.sin(q_mat), np.cos(q_mat), u_mat), axis = 1)
+
         output_mat = self.predict(input_mat)
-
-        if input_scaler is not None:
-            input_mat = input_scaler.transform(input_mat)
-        elif is_inputScale:
-            input_scaler = preprocessing.StandardScaler().fit(input_mat)
-            input_mat = input_scaler.transform(input_mat)
-
-        if output_scaler is not None:
-            output_mat = output_scaler.transform(output_mat)
-        elif is_outputScale:
-            output_scaler = preprocessing.StandardScaler().fit(output_mat)
-            output_mat = output_scaler.transform(output_mat)
-
-        return input_mat, output_mat, input_scaler, output_scaler
-
+        return input_mat, output_mat
 
 
 

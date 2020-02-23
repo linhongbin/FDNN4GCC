@@ -16,7 +16,7 @@ def init_weights(m):
         m.bias.data.fill_(0.01)
 
 
-def create_simulator(save_dir, DistScale=1, estimateBiasScale=1e-2, sample_num=300, jntPosSensingNoise=1e-5, jntTorSensingNoise=1e-5):
+def create_simulator(save_dir, DistScale=1, sample_num=300, jntPosSensingNoise=1e-5, jntTorSensingNoise=1e-5):
     D = 6
     device = 'cpu'
     model_DistPos = SigmoidNet(D, 100, D).to(device)
@@ -50,12 +50,11 @@ def create_simulator(save_dir, DistScale=1, estimateBiasScale=1e-2, sample_num=3
     save_dict['output_scaler_DistNeg'] = output_scaler_DistNeg
     save_dict['avg_output_vec'] = avg_output_vec
     save_dict['DistScale'] = DistScale
-    save_dict['estimateBiasScale'] = estimateBiasScale
     save_dict['jntPosSensingNoise'] = jntPosSensingNoise
     save_dict['jntTorSensingNoise'] = jntTorSensingNoise
 
 
-    save_dir = join(save_dir, 'EstBias_'+str(estimateBiasScale) ,'Dist_'+str(DistScale))
+    save_dir = join(save_dir, 'Dist_'+str(DistScale))
     Path(save_dir).mkdir(parents=True, exist_ok=True)
     torch.save(save_dict, join(save_dir, 'simulator_param.pt'))
 
@@ -63,7 +62,7 @@ def create_simulator(save_dir, DistScale=1, estimateBiasScale=1e-2, sample_num=3
 
 
 def generate_data(param_load_path, simulate_num, repetitive_num = 10, data_type='train'):
-    data_type_list = ['train', 'test']
+    data_type_list = ['train', 'test', 'validate']
 
     if data_type not in data_type_list:
         raise Exception("data_type should be", data_type_list)
@@ -82,7 +81,6 @@ def generate_data(param_load_path, simulate_num, repetitive_num = 10, data_type=
     model_DistNeg.load_state_dict(checkpoint['model_DistNeg'])
     avg_output_vec = checkpoint['avg_output_vec']
     DistScale = checkpoint['DistScale']
-    estimateBiasScale = checkpoint['estimateBiasScale']
     jntPosSensingNoise = checkpoint['jntPosSensingNoise']
     jntTorSensingNoise = checkpoint['jntTorSensingNoise']
 
@@ -111,13 +109,6 @@ def generate_data(param_load_path, simulate_num, repetitive_num = 10, data_type=
 
         gravity_model = MTM_CAD()
 
-        # add random bias in a specific scale to the param of gravity model
-        if data_type == 'train':
-            param_vec = gravity_model.param_vec
-            param_vec = param_vec + (np.random.rand(param_vec.shape[0],1)-0.5)*2*estimateBiasScale*np.abs(param_vec)
-            gravity_model.param_vec = param_vec
-
-
         # calculate the output matrix
         output_mat_gravity = gravity_model.predict(q_mat)
         for i in range(D):
@@ -125,7 +116,11 @@ def generate_data(param_load_path, simulate_num, repetitive_num = 10, data_type=
             output_mat_DistNeg[:, i] = output_mat_DistNeg[:, i] * avg_output_vec[i]*DistScale
 
         input_mat = np.concatenate((np.sin(q_mat), np.cos(q_mat), u_mat), axis=1)
-        output_mat = output_mat_gravity + output_mat_DistPos*u_mat + output_mat_DistNeg *(1-u_mat)
+
+        if data_type is not 'validate':
+            output_mat = output_mat_gravity + output_mat_DistPos*u_mat + output_mat_DistNeg *(1-u_mat)
+        else:
+            output_mat = output_mat_gravity
 
 
         # add sensing noise to input for torques of training data
@@ -143,6 +138,8 @@ def generate_data(param_load_path, simulate_num, repetitive_num = 10, data_type=
 
         if data_type == 'train':
             save_dir = join(save_dir, str(sample_index))
+
+        save_dir = join(save_dir, 'data')
         Path(save_dir).mkdir(parents=True, exist_ok=True)
         io.savemat(join(save_dir, 'N'+str(simulate_num)+'_D6_SinCosInput.mat'),
                    {'input_mat': input_mat, 'output_mat': output_mat})
@@ -155,18 +152,20 @@ def generate_data(param_load_path, simulate_num, repetitive_num = 10, data_type=
 
 save_dir = join("data", "MTMR_28002", "sim", "random", 'N30000','D6_SinCosInput')
 
-estimateBiasScale = 0.01
-DistScale = 0.1
+DistScale = 0.02
 simulate_num = 1000
 repetitive_num = 10
 
-train_simulate_num_list = [100,500,1000,5000, 10000, 30000]
+# train_simulate_num_list = [100,500,1000,5000, 10000, 30000]
+train_simulate_num_list = [100,300]
 test_simulate_num = 20000
-save_dir = join("data", "MTMR_28002", "sim", "random", 'EstBias_'+str(estimateBiasScale), 'Dist_'+str(DistScale))
+save_dir = join("data", "MTMR_28002", "sim", "random", 'Dist_'+str(DistScale))
 
-create_simulator(join("data", "MTMR_28002", "sim", "random"), estimateBiasScale=estimateBiasScale, DistScale=DistScale,sample_num=300)
+create_simulator(join("data", "MTMR_28002", "sim", "random"), DistScale=DistScale,sample_num=300)
 
 for train_simulate_num in train_simulate_num_list:
     generate_data(save_dir, train_simulate_num, repetitive_num = repetitive_num, data_type='train')
 
 generate_data(save_dir, test_simulate_num, repetitive_num=1, data_type='test')
+
+generate_data(save_dir, 20000, repetitive_num=1, data_type='validate')

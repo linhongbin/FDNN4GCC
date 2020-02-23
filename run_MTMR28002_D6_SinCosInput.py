@@ -9,8 +9,8 @@ from loadModel import get_model, save_model
 from HyperParam import get_hyper_param
 from AnalyticalModel import *
 
-def loop_func(train_data_path, test_data_path, use_net, robot, train_type='BP', valid_data_path=None):
-    param_dict = get_hyper_param(robot, train_type=train_type)
+def loop_func(train_data_path, test_data_path, use_net, robot, train_type='BP', valid_data_path=None, is_sim = False):
+    param_dict = get_hyper_param(robot, train_type=train_type, is_sim=is_sim)
 
     max_training_epoch = param_dict['max_training_epoch'] # stop train when reach maximum training epoch
     goal_loss = param_dict['goal_loss'] # stop train when reach goal loss
@@ -30,7 +30,15 @@ def loop_func(train_data_path, test_data_path, use_net, robot, train_type='BP', 
                                                                                                            valid_ratio=param_dict['valid_ratio'],
                                                                                                            valid_data_path=join(valid_data_path, "data") if valid_data_path is not None else None)
     elif train_type == 'PKD':
-        teacherModel = MTM_MLSE4POL()
+        if not is_sim:
+            teacherModel = MTM_MLSE4POL()
+        else:
+            estimateBiasScale = 0.02
+            teacherModel = MTM_CAD()
+            # param_vec = teacherModel.param_vec
+            # param_vec = param_vec + (np.random.rand(param_vec.shape[0], 1) - 0.5) * 2 * estimateBiasScale * np.abs(param_vec)
+            # teacherModel.param_vec = param_vec
+
         train_loader, valid_loader, teacher_loader, input_mean, input_std, output_mean, output_std = load_preProcessData(join(train_data_path, "data"),
                                                                                                                         batch_size,
                                                                                                                         device,
@@ -103,29 +111,44 @@ def loop_func(train_data_path, test_data_path, use_net, robot, train_type='BP', 
 ################################################################################################################
 
 
-# N_list = [2,3,4,5,6,7,8,9,10,12,15,17,20]
-# std = 1
-# train_file_list = ['N'+str(i)+'_std'+str(std) for i in N_list]
-#
-# use_net_list = ['SinNet', 'ReLuNet', 'SigmoidNet','Lagrangian_SinNet']
-
-
-# for use_net in use_net_list:
-#     train_data_path = join("data", "MTMR_28002", "real", "uniform","D5N5","dual")
-#     test_data_path = join("data", "MTMR_28002", "real", "random","D5N10")
-#     loop_func(train_data_path, test_data_path, use_net)
-
-#test
-train_data_path = join("data", "MTMR_28002", "real", "uniform", "N4", 'D6_SinCosInput', "dual")
-valid_data_path = join("data", "MTMR_28002", "real", "uniform",  "N5", 'D6_SinCosInput', "dual")
-test_data_path = join("data", "MTMR_28002", "real", "random", 'N319','D6_SinCosInput')
-# loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002', train_type='BP', valid_data_path=valid_data_path)
-loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002', train_type='PKD', valid_data_path= valid_data_path)
-
-# train_data_path = join("data", "MTMR_28002", "real", "uniform", "N4andN5", 'D6_SinCosInput', "dual")
+# # train real MTM
+# train_data_path = join("data", "MTMR_28002", "real", "uniform", "N4", 'D6_SinCosInput', "dual")
+# valid_data_path = join("data", "MTMR_28002", "real", "uniform",  "N5", 'D6_SinCosInput', "dual")
 # test_data_path = join("data", "MTMR_28002", "real", "random", 'N319','D6_SinCosInput')
-# loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002', train_type='BP')
+# # loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002', train_type='BP', valid_data_path=valid_data_path)
+# loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002', train_type='PKD', valid_data_path= valid_data_path)
+
+
+# train simulated MTM
+# loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002', train_type='BP', valid_data_path=valid_data_path)
 # loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002', train_type='PKD')
+
+
+# # add random bias in a specific scale to the param of gravity model
+# # if data_type == 'train':
+# #     param_vec = gravity_model.param_vec
+# #     param_vec = param_vec + (np.random.rand(param_vec.shape[0], 1) - 0.5) * 2 * estimateBiasScale * np.abs(param_vec)
+# #     gravity_model.param_vec = param_vec
+
+
+# train_simulate_num_list = [100,500,1000,5000, 10000, 30000]
+train_simulate_num_list = [100,300]
+test_simulate_num = 20000
+DistScale = 0.02
+save_dir = join("data", "MTMR_28002", "sim", "random", 'Dist_'+str(DistScale))
+repetitive_num = 10
+
+test_data_path = join(save_dir, 'test', 'N20000', 'D6_SinCosInput')
+valid_data_path = join(save_dir, 'test', 'N20000', 'D6_SinCosInput')
+for train_simulate_num in train_simulate_num_list:
+    for i in range(repetitive_num):
+        train_data_path = join(save_dir, "train", 'N'+str(train_simulate_num), 'D6_SinCosInput', str(i+1))
+        loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection', 'MTMR28002', train_type='BP',valid_data_path=valid_data_path)
+        #loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection', 'MTMR28002', train_type='PKD', is_sim=True, valid_data_path=valid_data_path)
+
+
+
+
 
 
 
