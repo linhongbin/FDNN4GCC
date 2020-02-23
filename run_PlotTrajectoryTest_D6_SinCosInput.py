@@ -39,7 +39,7 @@ legend_list = []
 # get predict MLSE4POL Model output
 MTM_MLSE4POL_Model = MTM_MLSE4POL()
 test_output_hat_mat_List.append(MTM_MLSE4POL_Model.predict(test_input_mat))
-legend_list.append('MLSE4POL')
+
 
 
 device = 'cpu'
@@ -51,7 +51,7 @@ load_model_path = join(train_data_path, "result", "model")
 model = get_model('MTM', use_net, D, device=device)
 model, _, _ = load_model(load_model_path, use_net+'_'+train_type, model)
 test_output_hat_mat_List.append(model.predict_NP(test_input_mat))
-legend_list.append('DFNN with BP')
+
 
 
 # get predict DNN with Knowledge Distillation output
@@ -61,8 +61,10 @@ load_model_path = join(train_data_path, "result", "model")
 model = get_model('MTM', use_net, D, device=device)
 model, _, _ = load_model(load_model_path, use_net+'_'+train_type, model)
 test_output_hat_mat_List.append(model.predict_NP(test_input_mat))
-legend_list.append('DFNN with PKD')
 
+
+
+legend_list = ['Physical Teacher Model', 'DFNN with LfS', 'DFNN with PKD']
 
 
 # plot predict error bar figures
@@ -79,6 +81,8 @@ for i in range(len(rel_rms_list)):
     abs_rms_list[i].append(np.mean(abs_rms_list[i], axis=0))
     rel_rms_list[i].append(np.mean(rel_rms_list[i],axis=0))
 
+for i in range(len(rel_rms_list)):
+    rel_rms_list[i] =[k*100 for k in rel_rms_list[i]]
 
 #print(err_output_mat)
 
@@ -90,9 +94,10 @@ w = 0.2
 space = 0.2
 capsize = 2
 fontsize = 30
+fill_color_list = ['tab:blue','tab:orange', 'tab:green']
 
 for i in range(len(abs_rms_list)):
-    ax.bar(jnt_index+space*(i-1), abs_rms_list[i],  width=w,align='center', alpha=0.5, ecolor='black', capsize=capsize, label=legend_list[i])
+    ax.bar(jnt_index+space*(i-1), abs_rms_list[i],  width=w,align='center', color=fill_color_list[i], alpha=0.6, ecolor='black', capsize=capsize, label=legend_list[i])
 
 ax.set_xticks(jnt_index)
 labels = ['Joint '+str(i+1) for i in range(6)]
@@ -123,7 +128,7 @@ capsize = 2
 fontsize = 30
 
 for i in range(len(rel_rms_list)):
-    ax.bar(jnt_index+space*(i-1), rel_rms_list[i],  width=w,align='center', alpha=0.5, ecolor='black', capsize=capsize, label=legend_list[i])
+    ax.bar(jnt_index+space*(i-1), rel_rms_list[i],  width=w,align='center', color=fill_color_list[i], alpha=0.6, ecolor='black', capsize=capsize, label=legend_list[i])
 
 ax.set_xticks(jnt_index)
 labels = ['Joint '+str(i+1) for i in range(6)]

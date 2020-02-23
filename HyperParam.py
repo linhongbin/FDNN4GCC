@@ -12,6 +12,9 @@ def get_hyper_param(robot, use_net=None, train_type=None, is_sim = False):
         param_dict['learning_rate'] = 0.06
         param_dict['D'] = 6
 
+        if is_sim:
+            param_dict['earlyStop_patience'] = 10
+
         if train_type == 'PKD':
             if not is_sim:
                 param_dict['learning_rate'] = 0.01
@@ -22,9 +25,10 @@ def get_hyper_param(robot, use_net=None, train_type=None, is_sim = False):
             else:
                 param_dict['learning_rate'] = 0.01
                 param_dict['teacher_sample_num'] = 300
-                param_dict['initLamda'] = 0.002
-                param_dict['endLamda'] = 0.0001
+                param_dict['initLamda'] =2
+                param_dict['endLamda'] = 1
                 param_dict['decayStepsLamda'] = 30
+
 
 
     return param_dict

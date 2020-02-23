@@ -132,19 +132,19 @@ def loop_func(train_data_path, test_data_path, use_net, robot, train_type='BP', 
 
 
 # train_simulate_num_list = [100,500,1000,5000, 10000, 30000]
-train_simulate_num_list = [100,300]
+train_simulate_num_list = [10, 50, 100,500,1000, 5000]
 test_simulate_num = 20000
 DistScale = 0.02
 save_dir = join("data", "MTMR_28002", "sim", "random", 'Dist_'+str(DistScale))
-repetitive_num = 10
+repetitive_num = 4
 
 test_data_path = join(save_dir, 'test', 'N20000', 'D6_SinCosInput')
 valid_data_path = join(save_dir, 'test', 'N20000', 'D6_SinCosInput')
 for train_simulate_num in train_simulate_num_list:
     for i in range(repetitive_num):
         train_data_path = join(save_dir, "train", 'N'+str(train_simulate_num), 'D6_SinCosInput', str(i+1))
-        loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection', 'MTMR28002', train_type='BP',valid_data_path=valid_data_path)
-        #loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection', 'MTMR28002', train_type='PKD', is_sim=True, valid_data_path=valid_data_path)
+        loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection', 'MTMR28002', train_type='BP',is_sim=True,valid_data_path=valid_data_path)
+        loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection', 'MTMR28002', train_type='PKD', is_sim=True, valid_data_path=valid_data_path)
 
 
 

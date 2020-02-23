@@ -117,10 +117,7 @@ def generate_data(param_load_path, simulate_num, repetitive_num = 10, data_type=
 
         input_mat = np.concatenate((np.sin(q_mat), np.cos(q_mat), u_mat), axis=1)
 
-        if data_type is not 'validate':
-            output_mat = output_mat_gravity + output_mat_DistPos*u_mat + output_mat_DistNeg *(1-u_mat)
-        else:
-            output_mat = output_mat_gravity
+        output_mat = output_mat_gravity + output_mat_DistPos*u_mat + output_mat_DistNeg *(1-u_mat)
 
 
         # add sensing noise to input for torques of training data
@@ -154,10 +151,10 @@ save_dir = join("data", "MTMR_28002", "sim", "random", 'N30000','D6_SinCosInput'
 
 DistScale = 0.02
 simulate_num = 1000
-repetitive_num = 10
+repetitive_num = 4
 
 # train_simulate_num_list = [100,500,1000,5000, 10000, 30000]
-train_simulate_num_list = [100,300]
+train_simulate_num_list = [10, 50, 100,500,1000, 5000]
 test_simulate_num = 20000
 save_dir = join("data", "MTMR_28002", "sim", "random", 'Dist_'+str(DistScale))
 
