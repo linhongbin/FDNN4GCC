@@ -37,11 +37,12 @@ def callback(data):
     global pub
     global count
     global model
-    global safe_upper_torque_limit
-    global safe_lower_torque_limit
-    global db_vel_vec
-    global sat_vel_vec
-    global fric_comp_ratio_vec
+    global safe_upper_torque_limit_arr
+    global safe_lower_torque_limit_arr
+    global db_vel_arr
+    global sat_vel_arr
+    global fric_comp_ratio_arr
+    global GC_init_pos_arr
 
 
     start = time.clock()
@@ -51,23 +52,30 @@ def callback(data):
     vel_lst = data.velocity[:-1]
     effort_lst = data.effort[:-1]
 
-    pos_arr = np.array(pos_lst)
+    pos_arr = np.array(pos_lst).reshape(1,-1)
+    SinCos_pos_arr = np.concatenate((np.sin(pos_arr), np.cos(pos_arr)), axis=1)
     vel_arr = np.array(vel_lst)
     effort_arr = np.array(effort_lst)
 
     if model_type == 'ReLU_Dual_UDirection':
-        tor_pos = model.predict_NP(np.concatenate((pos_arr, np.ones(pos_arr.shape)), axis=0))
-        tor_neg = model.predict_NP(np.concatenate((pos_arr, np.zeros(pos_arr.shape)), axis=0))
-        sign_vel = dbs_vel(vel_arr, db_vel_vec[:-1], sat_vel_vec[:-1], fric_comp_ratio_vec[:-1])
+        print(SinCos_pos_arr)
+        tor_pos = model.predict_NP(np.concatenate((SinCos_pos_arr, np.ones(pos_arr.shape)), axis=1))
+        tor_neg = model.predict_NP(np.concatenate((SinCos_pos_arr, np.zeros(pos_arr.shape)), axis=1))
 
-        tor_arr = tor_pos.multiply(sign_vel) + tor_neg.multiply(1-sign_vel);
+        sign_vel_vec = np.zeros((1,6))
+        for i in range(6):
+            sign_vel_vec[0][i] = dbs_vel(vel_arr[i], db_vel_arr[i], sat_vel_arr[i], fric_comp_ratio_arr[i])
+
+        tor_arr = np.multiply(tor_pos,sign_vel_vec) + np.multiply(tor_neg,1-sign_vel_vec)
+
+        tor_arr = tor_arr[0]
 
         # saturate the output torques
         for i in range(6):
-            if tor_arr(i) >= safe_upper_torque_limit[i]:
-                tor_arr[i] = safe_upper_torque_limit[i]
-            elif tor_arr[i] <= safe_lower_torque_limit[i]:
-                tor_arr[i] = safe_lower_torque_limit[i]
+            if tor_arr[i] >= safe_upper_torque_limit_arr[i]:
+                tor_arr[i] = safe_upper_torque_limit_arr[i]
+            elif tor_arr[i] <= safe_lower_torque_limit_arr[i]:
+                tor_arr[i] = safe_lower_torque_limit_arr[i]
 
 
 
@@ -99,19 +107,21 @@ def loop_func(MTM_ARM, use_net, load_model_path, train_type):
     global pub
     global count
     global model
-    global safe_upper_torque_limit
-    global safe_lower_torque_limit
-    global db_vel_vec
-    global sat_vel_vec
-    global fric_comp_ratio_vec
+    global safe_upper_torque_limit_arr
+    global safe_lower_torque_limit_arr
+    global db_vel_arr
+    global sat_vel_arr
+    global fric_comp_ratio_arr
+    global GC_init_pos_arr
 
 
-    safe_upper_torque_limit = np.array([0.2,0.8,0.6,0.2,0.2,0.2,0])
-    safe_lower_torque_limit = np.array([-0.2,-0.1,0,-0.3,-0.1,-0.1,0])
-    db_vel_vec = np.array([0.02,0.02,0.02,0.01,0.008,0.008,0.01])
-    sat_vel_vec = np.array([0.2,0.2,0.2,0.2,0.2,0.2,0.2])
-    fric_comp_ratio_vec = np.array([0.7,0.01,0.5,0.4,0.2,0.2,1])
-    GC_init_pos = np.radians(np.array([0,0,0,0,90,0,0]))
+
+    safe_upper_torque_limit_arr = np.array([0.2,0.8,0.6,0.2,0.2,0.2,0])
+    safe_lower_torque_limit_arr = np.array([-0.2,-0.1,0,-0.3,-0.1,-0.1,0])
+    db_vel_arr = np.array([0.02,0.02,0.02,0.01,0.008,0.008,0.01])
+    sat_vel_arr = np.array([0.2,0.2,0.2,0.2,0.2,0.2,0.2])
+    fric_comp_ratio_arr = np.array([0.7,0.01,0.5,0.4,0.2,0.2,1])
+    GC_init_pos_arr = np.radians(np.array([0,0,0,0,90,0,0]))
 
     pub_topic = '/dvrk/' + MTM_ARM + '/set_effort_joint'
     sub_topic = '/dvrk/' + MTM_ARM + '/state_joint_current'
@@ -132,7 +142,7 @@ def loop_func(MTM_ARM, use_net, load_model_path, train_type):
     count = 0
 
     # init pose
-    mtm_arm.move_joint(GC_init_pos)
+    mtm_arm.move_joint(GC_init_pos_arr)
     time.sleep(3)
     sub = rospy.Subscriber(sub_topic, JointState, callback)
     while not rospy.is_shutdown():
