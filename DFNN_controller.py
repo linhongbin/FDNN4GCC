@@ -58,7 +58,7 @@ def callback(data):
     effort_arr = np.array(effort_lst)
 
     if model_type == 'ReLU_Dual_UDirection':
-        print(SinCos_pos_arr)
+        #print(SinCos_pos_arr)
         tor_pos = model.predict_NP(np.concatenate((SinCos_pos_arr, np.ones(pos_arr.shape)), axis=1))
         tor_neg = model.predict_NP(np.concatenate((SinCos_pos_arr, np.zeros(pos_arr.shape)), axis=1))
 
@@ -89,11 +89,14 @@ def callback(data):
 
     msg = JointState()
     output_lst = tor_arr.tolist()
-    output_lst.append(0)
+    output_lst.append(0.0)
 
     msg.effort = output_lst
 
-    # pub.publish(msg)
+    #pub.publish(msg)
+
+
+
     # elapsed = time.clock()
     # elapsed = elapsed - start
     # print "Time spent in (function name) is: ", elapsed
@@ -152,7 +155,7 @@ def loop_func(MTM_ARM, use_net, load_model_path, train_type):
 MTM_ARM = 'MTMR'
 use_net = 'ReLU_Dual_UDirection'
 load_model_path = join("data", "MTMR_28002", "real", "uniform", "N4", 'D6_SinCosInput', "dual","result","model")
-train_type = 'BP'
+train_type = 'PKD'
 
 loop_func(MTM_ARM, use_net, load_model_path, train_type)
 
