@@ -1,5 +1,10 @@
 import rospy
 from sensor_msgs.msg import JointState
+
+from std_msgs.msg import UInt8MultiArray
+
+from std_msgs.msg import Bool
+
 #import pdb
 #pdb.set_trace()
 from evaluateTool import predict
@@ -15,6 +20,8 @@ from AnalyticalModel import *
 
 # Deadband segmented friction
 # sign_vel = 0~1 function
+
+
 def dbs_vel(joint_vel, bd_vel, sat_vel, fric_comp_ratio):
     if joint_vel >= sat_vel:
         sign_vel = 0.5 + 0.5 * fric_comp_ratio;
@@ -93,13 +100,35 @@ def callback(data):
 
     msg.effort = output_lst
 
-    #pub.publish(msg)
+    pub.publish(msg)
 
 
 
     # elapsed = time.clock()
     # elapsed = elapsed - start
     # print "Time spent in (function name) is: ", elapsed
+
+def set_floating_mode(is_enable):
+    global pub_float
+    msg = UInt8MultiArray()
+    if is_enable:
+        msg.data = [1,1,1,1,1,1,1]
+    else:
+        msg.data = [0, 0, 0, 0, 0, 0, 0]
+
+    pub_float.publish(msg)
+
+
+def set_default_GCC_mode(is_enable):
+    global pub_default_GCC
+    msg = Bool()
+    if is_enable:
+        msg.data = True
+    else:
+        msg.data = False
+
+    pub_default_GCC.publish(msg)
+
 
 
 
@@ -116,6 +145,8 @@ def loop_func(MTM_ARM, use_net, load_model_path, train_type):
     global sat_vel_arr
     global fric_comp_ratio_arr
     global GC_init_pos_arr
+    global pub_float
+    global pub_default_GCC
 
 
 
@@ -129,6 +160,9 @@ def loop_func(MTM_ARM, use_net, load_model_path, train_type):
     pub_topic = '/dvrk/' + MTM_ARM + '/set_effort_joint'
     sub_topic = '/dvrk/' + MTM_ARM + '/state_joint_current'
 
+    pub_float_topic = '/dvrk/'+MTM_ARM+'/set_floating_mode'
+    pub_default_GCC_topic = '/dvrk/'+MTM_ARM+'/set_gravity_compensation'
+
     D = 6
     device = 'cpu'
 
@@ -139,6 +173,9 @@ def loop_func(MTM_ARM, use_net, load_model_path, train_type):
     model = model.to('cpu')
 
     pub = rospy.Publisher(pub_topic, JointState, queue_size=15)
+    pub_float = rospy.Publisher(pub_float_topic, UInt8MultiArray, queue_size=15)
+    pub_default_GCC = rospy.Publisher(pub_default_GCC_topic, Bool, queue_size=15)
+
     rospy.init_node(MTM_ARM + 'controller', anonymous=True)
     rate = rospy.Rate(10)  # 10hz
     mtm_arm = dvrk.mtm(MTM_ARM)
@@ -147,6 +184,11 @@ def loop_func(MTM_ARM, use_net, load_model_path, train_type):
     # init pose
     mtm_arm.move_joint(GC_init_pos_arr)
     time.sleep(3)
+
+
+    set_default_GCC_mode(False)
+    set_floating_mode(True)
+
     sub = rospy.Subscriber(sub_topic, JointState, callback)
     while not rospy.is_shutdown():
         pass
