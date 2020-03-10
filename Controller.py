@@ -52,9 +52,10 @@ class Controller():
         self.set_default_GCC_mode(False)
         self.mtm_arm = dvrk.mtm(MTM_ARM)
 
-        time.sleep(1)
-
+        self.pub_zero_torques()
         self.sub_pos = rospy.Subscriber(self.sub_pos_topic, JointState, self.sub_pos_cb_with_gcc)
+
+        rospy.on_shutdown(self.stop_gc)
 
 
     def load_gcc_model(self, model_type, load_model_path=None, use_net=None, train_type=None):
@@ -70,14 +71,15 @@ class Controller():
     def start_gc(self):
         self.set_floating_mode(False)
         self.mtm_arm.move_joint(self.GC_init_pos_arr)
+        self.pub_zero_torques()
         self.set_isOutputGCC(True)
         self.set_floating_mode(True)
         print("GCC start")
 
 
     def stop_gc(self):
+        self.pub_zero_torques()
         self.set_isOutputGCC(False)
-        self.mtm_arm.move_joint(self.GC_init_pos_arr)
         print("GCC stop")
 
     def update_isExceedSafeVel(self, vel_arr):
@@ -88,6 +90,11 @@ class Controller():
                 break
             else:
                 self.isExceedSafeVel = False
+
+    def pub_zero_torques(self):
+        msg = JointState()
+        msg.effort = np.zeros(7).tolist()
+        self.pub_tor.publish(msg)
 
 
     def dbs_vel(self, joint_vel, bd_vel, sat_vel, fric_comp_ratio):
@@ -139,13 +146,17 @@ class Controller():
         tor_arr = self.bound_tor(tor_arr)
 
 
-        msg = JointState()
-        output_lst = tor_arr.tolist()
-        output_lst.append(0.0)
 
-        msg.effort = output_lst
 
         if self.isOutputGCC:
+            msg = JointState()
+            output_lst = tor_arr.tolist()
+            output_lst.append(0.0)
+            msg.effort = output_lst
+            self.pub_tor.publish(msg)
+        else:
+            msg = JointState()
+            msg.effort = np.zeros(7).tolist()
             self.pub_tor.publish(msg)
 
         self.update_isExceedSafeVel(vel_arr)
