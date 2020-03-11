@@ -13,6 +13,8 @@ from loadModel import get_model, load_model
 import time
 
 from AnalyticalModel import *
+import pdb
+
 
 
 class Controller():
@@ -29,12 +31,14 @@ class Controller():
     model = None
     isExceedSafeVel = False
     isOutputGCC = False
+    isGCCRuning = False
+    isFloatingMode = False
 
 
     def __init__(self, MTM_ARM):
 
         # define ros node
-        rospy.init_node(MTM_ARM + 'controller', anonymous=True)
+        rospy.init_node(MTM_ARM + 'GCC_controller', anonymous=True)
 
         self.MTM_ARM = MTM_ARM
 
@@ -49,12 +53,17 @@ class Controller():
         self.pub_isFloatMode = rospy.Publisher(self.pub_isFloatMode_topic, UInt8MultiArray, queue_size=15)
         self.pub_isDefaultGCC = rospy.Publisher(self.pub_isDefaultGCC_topic, Bool, queue_size=15)
 
+        # define subsriber
+        self.sub_pos = None
+
+        # shut down dvrk default GCC
         self.set_default_GCC_mode(False)
+        self.pub_zero_torques()
+
+        # define dvrk python api
         self.mtm_arm = dvrk.mtm(MTM_ARM)
 
-        self.pub_zero_torques()
-        self.sub_pos = rospy.Subscriber(self.sub_pos_topic, JointState, self.sub_pos_cb_with_gcc)
-
+        # keyboard shutdown function
         rospy.on_shutdown(self.stop_gc)
 
 
@@ -68,19 +77,50 @@ class Controller():
         else:
             raise Exception("model type is not support.")
 
-    def start_gc(self):
-        self.set_floating_mode(False)
-        self.mtm_arm.move_joint(self.GC_init_pos_arr)
-        self.pub_zero_torques()
-        self.set_isOutputGCC(True)
+    def start_gc(self, isOutputGCC=True):
+
+        # check if model is assigned
+        if self.model is None:
+            print("you should load the model before call start_gc().")
+            return 0
+
+        # switch to torque control mode
         self.set_floating_mode(True)
+        self.isFloatingMode = True
+
+        # set if output control torque
+        self.set_isOutputGCC(isOutputGCC)
+
+        # clear pub torque buffer
+        self.pub_zero_torques()
+
+        # assign controller callback function for position subsriber
+        self.sub_pos = rospy.Subscriber(self.sub_pos_topic, JointState, self.sub_pos_cb_with_gcc)
+
+        # set flag
+        self.isGCCRuning = True
+
         print("GCC start")
 
 
     def stop_gc(self):
+
+        # switch to torque control mode
+        self.set_floating_mode(True)
+        self.isFloatingMode = True
+
+        # assign controller callback function for position subsriber
+        self.sub_pos = None
+
+
+        # clear pub torque buffer
+        self.pub_tor = rospy.Publisher(self.pub_tor_topic, JointState, queue_size=15)
         self.pub_zero_torques()
-        self.set_isOutputGCC(False)
-        print("GCC stop")
+
+        # set flag
+        self.isGCCRuning = False
+
+        print("GCC stop...")
 
     def update_isExceedSafeVel(self, vel_arr):
         abs_vel_arr = np.abs(vel_arr)
@@ -94,7 +134,8 @@ class Controller():
     def pub_zero_torques(self):
         msg = JointState()
         msg.effort = np.zeros(7).tolist()
-        self.pub_tor.publish(msg)
+        for i in range(16):
+            self.pub_tor.publish(msg)
 
 
     def dbs_vel(self, joint_vel, bd_vel, sat_vel, fric_comp_ratio):
@@ -202,22 +243,23 @@ class Controller():
     # publish topic: set_floating_mode
     def set_floating_mode(self, is_enable):
         msg = UInt8MultiArray()
-        if is_enable:
-            msg.data = [1, 1, 1, 1, 1, 1, 1]
-        else:
-            msg.data = [0, 0, 0, 0, 0, 0, 0]
+        for i in range(16):
+            if is_enable:
+                msg.data = [1, 1, 1, 1, 1, 1, 1]
+            else:
+                msg.data = [0, 0, 0, 0, 0, 0, 0]
 
         self.pub_isFloatMode.publish(msg)
 
     # publish topic: set_gravity_compensation
     def set_default_GCC_mode(self, is_enable):
-        msg = Bool()
-        if is_enable:
-            msg.data = True
-        else:
-            msg.data = False
+        for i in range(16):
+            if is_enable:
+                self.pub_isDefaultGCC.publish(Bool(data=True))
+            else:
+                self.pub_isDefaultGCC.publish(Bool(data=False))
 
-        self.pub_isDefaultGCC.publish(msg)
+
 
     def ros_spin(self):
         while not rospy.is_shutdown():
@@ -227,6 +269,17 @@ class Controller():
 
     def set_isOutputGCC(self, isOutputGCC):
         self.isOutputGCC = isOutputGCC
+
+    def move_MTM_joint(self, jnt_pos_arr):
+        if self.isGCCRuning:
+            self.stop_gc()
+
+        # switch to position control mode
+        if self.isFloatingMode:
+            self.pub_isFloatMode(False)
+
+        self.mtm_arm.move_joint(jnt_pos_arr)
+
 
 
 
@@ -243,6 +296,8 @@ model_type = 'DFNN'
 
 controller = Controller(MTM_ARM)
 controller.load_gcc_model(model_type, load_model_path=load_model_path, use_net=use_net, train_type=train_type)
+controller.move_MTM_joint(controller.GC_init_pos_arr)
 controller.start_gc()
-controller.ros_spin()
+time.sleep(3)
+controller.stop_gc()
 
