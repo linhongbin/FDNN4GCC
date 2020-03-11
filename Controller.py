@@ -34,7 +34,7 @@ class Controller():
     ready_q_margin = np.radians(np.array([5,5,5,5,5,5]))
     jnt_limit_check_margin =  np.radians(2)
 
-    safe_vel_limit = np.array([1,1,1,1,1,1,100])
+    safe_vel_limit = np.array([6,6,6,6,6,6,100])
     D = 6
     device = 'cpu'
     count = 0
@@ -47,6 +47,8 @@ class Controller():
     FIFO_buffer_size = 1000
     FIFO_pos = np.zeros((FIFO_buffer_size,D))
     FIFO_pos_cnt = 0
+
+    current_pos_arr = np.zeros(D)
 
 
     def __init__(self, MTM_ARM):
@@ -63,12 +65,12 @@ class Controller():
         self.pub_isDefaultGCC_topic = '/dvrk/' + MTM_ARM + '/set_gravity_compensation'
 
         # define publisher
-        self.pub_tor = rospy.Publisher(self.pub_tor_topic, JointState, queue_size=15)
+        self.pub_tor = rospy.Publisher(self.pub_tor_topic, JointState, queue_size=3)
         self.pub_isFloatMode = rospy.Publisher(self.pub_isFloatMode_topic, UInt8MultiArray, queue_size=2)
         self.pub_isDefaultGCC = rospy.Publisher(self.pub_isDefaultGCC_topic, Bool, queue_size=2)
 
         # define subsriber
-        self.sub_pos = None
+        self.sub_pos = rospy.Subscriber(self.sub_pos_topic, JointState, self.sub_pos_cb)
 
         # shut down dvrk default GCC
         self.set_default_GCC_mode(False)
@@ -94,6 +96,8 @@ class Controller():
     def start_gc(self, isOutputGCC=True):
 
         # check if model is assigned
+        self.isExceedSafeVel = False
+
         if self.model is None:
             print("you should load the model before call start_gc().")
             return 0
@@ -124,7 +128,7 @@ class Controller():
         self.isFloatingMode = True
 
         # assign controller callback function for position subsriber
-        self.sub_pos = None
+        self.sub_pos = rospy.Subscriber(self.sub_pos_topic, JointState, self.sub_pos_cb)
 
 
         # clear pub torque buffer
@@ -197,16 +201,23 @@ class Controller():
         return sign_vel
 
     # call back function for subscribe position topic applying GCC
+    def sub_pos_cb(self, data):
+        pos_lst = data.position[:-1]
+        self.current_pos_arr = np.array(pos_lst)
+
     def sub_pos_cb_with_gcc(self, data):
 
         # test function collapse time
-        start = time.clock()
+        # start = time.clock()
+
 
         pos_lst = data.position[:-1]  # select 1-6 joints
+
         vel_lst = data.velocity[:-1]
         effort_lst = data.effort[:-1]
 
         pos_arr = np.array(pos_lst)
+        self.current_pos_arr = pos_arr
         vel_arr = np.array(vel_lst)
         effort_arr = np.array(effort_lst)
 
@@ -330,9 +341,14 @@ class Controller():
         self.pub_zero_torques()
         self.isFloatingMode = False
 
+        # print(self.mtm_arm.get_current_joint_position())
+        # pdb.set_trace()
+
+        #self.mtm_arm.move_joint(np.array(self.mtm_arm.get_current_joint_position()))
+        #pdb.set_trace()
         self.mtm_arm.move_joint(jnt_pos_arr)
-        print("moving to configuration", jnt_pos_arr)
-        time.sleep(0.5)
+        print("moving to configuration", np.degrees(jnt_pos_arr))
+        # time.sleep(0.5)
 
     # def random_sampling_SinCosInput(self, sample_num):
     #     D = 6
@@ -392,16 +408,16 @@ class Controller():
         return all([is_within_lower_limit, is_within_upper_limit, is_within_coup_lower_limit, is_within_coup_upper_limit])
 
 #
-# #
-# #
-# #
+# # #
+# # #
+# # #
 # # # test controller function
 # MTM_ARM = 'MTMR'
 # use_net = 'ReLU_Dual_UDirection'
 # load_model_path = join("data", "MTMR_28002", "real", "uniform", "N4", 'D6_SinCosInput', "dual", "result", "model")
 # train_type = 'PKD'
 # model_type = 'DFNN'
-#
+
 #
 #
 # controller = Controller(MTM_ARM)
