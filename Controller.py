@@ -24,7 +24,17 @@ class Controller():
     sat_vel_arr = np.array([0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2])
     fric_comp_ratio_arr = np.array([0.7, 0.01, 0.5, 0.4, 0.2, 0.2, 1])
     GC_init_pos_arr = np.radians(np.array([0, 0, 0, 0, 90, 0, 0]))
-    safe_vel_limit = np.array([6,6,6,6,6,6,100])
+
+    jnt_upper_limit = np.radians(np.array([40, 45, 34, 190, 175, 40]))
+    jnt_lower_limit = np.radians(np.array([-40, -14, -34, -80, -85, -40]))
+    jnt_coup_upper_limit = np.radians(41)
+    jnt_coup_lower_limit = np.radians(-11)
+    jnt_coup_limit_index = [1,2] # joint 2 and Joint 3
+
+    ready_q_margin = np.radians(np.array([5,5,5,5,5,5]))
+    jnt_limit_check_margin =  np.radians(2)
+
+    safe_vel_limit = np.array([1,1,1,1,1,1,100])
     D = 6
     device = 'cpu'
     count = 0
@@ -33,6 +43,10 @@ class Controller():
     isOutputGCC = False
     isGCCRuning = False
     isFloatingMode = False
+
+    FIFO_buffer_size = 1000
+    FIFO_pos = np.zeros((FIFO_buffer_size,D))
+    FIFO_pos_cnt = 0
 
 
     def __init__(self, MTM_ARM):
@@ -50,8 +64,8 @@ class Controller():
 
         # define publisher
         self.pub_tor = rospy.Publisher(self.pub_tor_topic, JointState, queue_size=15)
-        self.pub_isFloatMode = rospy.Publisher(self.pub_isFloatMode_topic, UInt8MultiArray, queue_size=15)
-        self.pub_isDefaultGCC = rospy.Publisher(self.pub_isDefaultGCC_topic, Bool, queue_size=15)
+        self.pub_isFloatMode = rospy.Publisher(self.pub_isFloatMode_topic, UInt8MultiArray, queue_size=2)
+        self.pub_isDefaultGCC = rospy.Publisher(self.pub_isDefaultGCC_topic, Bool, queue_size=2)
 
         # define subsriber
         self.sub_pos = None
@@ -64,7 +78,7 @@ class Controller():
         self.mtm_arm = dvrk.mtm(MTM_ARM)
 
         # keyboard shutdown function
-        rospy.on_shutdown(self.stop_gc)
+        rospy.on_shutdown(self.shutdown)
 
 
     def load_gcc_model(self, model_type, load_model_path=None, use_net=None, train_type=None):
@@ -114,7 +128,6 @@ class Controller():
 
 
         # clear pub torque buffer
-        self.pub_tor = rospy.Publisher(self.pub_tor_topic, JointState, queue_size=15)
         self.pub_zero_torques()
 
         # set flag
@@ -122,14 +135,36 @@ class Controller():
 
         print("GCC stop...")
 
+    def shutdown(self):
+        self.pub_tor = rospy.Publisher(self.pub_tor_topic, JointState, queue_size=15)
+        self.pub_isFloatMode = rospy.Publisher(self.pub_isFloatMode_topic, UInt8MultiArray, queue_size=2)
+        self.pub_isDefaultGCC = rospy.Publisher(self.pub_isDefaultGCC_topic, Bool, queue_size=2)
+
+        self.set_floating_mode(True)
+        self.isFloatingMode = True
+
+        # assign controller callback function for position subsriber
+        self.sub_pos = None
+
+
+        # clear pub torque buffer
+        self.pub_zero_torques()
+
+        # set flag
+        self.isGCCRuning = False
+
+        print("GCC Shutdown...")
+
     def update_isExceedSafeVel(self, vel_arr):
         abs_vel_arr = np.abs(vel_arr)
         for i in range(self.D):
-            if  abs_vel_arr[i] > self.safe_vel_limit[i]:
-                self.isExceedSafeVel =  True
+            if abs_vel_arr[i] > self.safe_vel_limit[i]:
+                self.isExceedSafeVel = True
                 break
             else:
                 self.isExceedSafeVel = False
+        # print("measuring vel: ", vel_arr)
+        # print("update_isExceedSafeVel: ", self.isExceedSafeVel)
 
     def pub_zero_torques(self):
         msg = JointState()
@@ -177,12 +212,12 @@ class Controller():
 
         tor_arr = self.predict(pos_arr, vel_arr)
 
-        self.count += 1
-        if (self.count == 50):
-            print('predict:', tor_arr)
-            print('measure:', effort_arr)
-            print('error:', tor_arr - effort_arr)
-            self.count = 0
+        # self.count += 1
+        # if (self.count == 50):
+        #     print('predict:', tor_arr)
+        #     print('measure:', effort_arr)
+        #     print('error:', tor_arr - effort_arr)
+        #     self.count = 0
 
         tor_arr = self.bound_tor(tor_arr)
 
@@ -202,11 +237,26 @@ class Controller():
 
         self.update_isExceedSafeVel(vel_arr)
 
+
+        self.update_FIFO_buffer(pos_arr)
+
         # elapsed = time.clock()
         # elapsed = elapsed - start
         # print "Time spent in (function name) is: ", elapsed
 
     # model predict function
+    def clear_FIFO_buffer(self):
+        self.FIFO_pos = np.zeros((self.FIFO_buffer_size, self.D))
+        self.FIFO_pos_cnt = 0
+
+    def update_FIFO_buffer(self, pos_arr):
+        tmp = self.FIFO_pos[:-1,:]
+        tmp = np.concatenate((pos_arr.reshape(1,-1), tmp), axis=0)
+        self.FIFO_pos = tmp
+        self.FIFO_pos_cnt += 1
+        if self.FIFO_pos_cnt > self.FIFO_buffer_size:
+            self.FIFO_pos_cnt = self.FIFO_buffer_size
+
     def predict(self, pos_arr, vel_arr):
         """
         :param SinCos_pos_arr: [sin(q), cos(q)]
@@ -242,14 +292,15 @@ class Controller():
 
     # publish topic: set_floating_mode
     def set_floating_mode(self, is_enable):
-        msg = UInt8MultiArray()
         for i in range(16):
-            if is_enable:
-                msg.data = [1, 1, 1, 1, 1, 1, 1]
-            else:
-                msg.data = [0, 0, 0, 0, 0, 0, 0]
+            msg = UInt8MultiArray()
+            for i in range(16):
+                if is_enable:
+                    msg.data = [1, 1, 1, 1, 1, 1, 1]
+                else:
+                    msg.data = [0, 0, 0, 0, 0, 0, 0]
 
-        self.pub_isFloatMode.publish(msg)
+            self.pub_isFloatMode.publish(msg)
 
     # publish topic: set_gravity_compensation
     def set_default_GCC_mode(self, is_enable):
@@ -275,29 +326,89 @@ class Controller():
             self.stop_gc()
 
         # switch to position control mode
-        if self.isFloatingMode:
-            self.pub_isFloatMode(False)
+        self.set_floating_mode(False)
+        self.pub_zero_torques()
+        self.isFloatingMode = False
 
         self.mtm_arm.move_joint(jnt_pos_arr)
+        print("moving to configuration", jnt_pos_arr)
+        time.sleep(0.5)
+
+    # def random_sampling_SinCosInput(self, sample_num):
+    #     D = 6
+    #     q_mat = np.zeros((sample_num, D))
+    #     for i in range(sample_num):
+    #         rand_arr = np.random.rand(D)
+    #         q_mat[i, :] = rand_arr * (self.jnt_upper_limit - self.jnt_lower_limit) + self.jnt_lower_limit
+    #
+    #     u_mat = np.zeros((sample_num, D))
+    #     for i in range(sample_num):
+    #         rand_arr = np.random.rand(D)
+    #         for j in range(D):
+    #             u_mat[i, j] = 1 if rand_arr[j]>0.5 else 0
+    #     input_mat = np.concatenate((np.sin(q_mat), np.cos(q_mat), u_mat), axis = 1)
+    #
+    #     output_mat = self.predict(input_mat)
+    #     return input_mat, output_mat
+
+    def random_testing_configuration(self, sample_num):
+        count = 0
+        q_mat = np.zeros((sample_num, self.D))
+        ready_q_mat = np.zeros((sample_num, self.D))
+
+        while not count==sample_num:
+                rand_arr = np.random.rand(self.D)
+                q_arr = rand_arr * (self.jnt_upper_limit - self.jnt_lower_limit) + self.jnt_lower_limit
+
+                u_arr = np.zeros((self.D))
+                rand_arr = np.random.rand(self.D)
+                for j in range(self.D):
+                    u_arr[j] = 1 if rand_arr[j]>0.5 else 0
+
+                dir_arr = u_arr - (1-u_arr)
+
+                ready_q_arr = q_arr - np.multiply(self.ready_q_margin, dir_arr)
+
+                if self.is_within_joint_limit(ready_q_arr, self.jnt_limit_check_margin) and self.is_within_joint_limit(q_arr, self.jnt_limit_check_margin):
+                    q_mat[count, :] = q_arr
+                    ready_q_mat[count, :] = ready_q_arr
+                    count = count + 1
+
+        return q_mat, ready_q_mat
 
 
 
 
+    def is_within_joint_limit(self, q_arr, limit_margin):
+        is_within_lower_limit = (self.jnt_lower_limit+limit_margin)<=q_arr
+        is_within_lower_limit = all(is_within_lower_limit.tolist())
 
+        is_within_upper_limit = (self.jnt_upper_limit-limit_margin)>=q_arr
+        is_within_upper_limit = all(is_within_upper_limit.tolist())
 
-# test controller function
-MTM_ARM = 'MTMR'
-use_net = 'ReLU_Dual_UDirection'
-load_model_path = join("data", "MTMR_28002", "real", "uniform", "N4", 'D6_SinCosInput', "dual", "result", "model")
-train_type = 'PKD'
-model_type = 'DFNN'
+        is_within_coup_lower_limit = (self.jnt_coup_lower_limit+limit_margin) <= q_arr[self.jnt_coup_limit_index[0]] + q_arr[self.jnt_coup_limit_index[1]]
+        is_within_coup_upper_limit = (self.jnt_coup_upper_limit-limit_margin) >= q_arr[self.jnt_coup_limit_index[0]] + q_arr[self.jnt_coup_limit_index[1]]
 
+        return all([is_within_lower_limit, is_within_upper_limit, is_within_coup_lower_limit, is_within_coup_upper_limit])
 
-
-controller = Controller(MTM_ARM)
-controller.load_gcc_model(model_type, load_model_path=load_model_path, use_net=use_net, train_type=train_type)
-controller.move_MTM_joint(controller.GC_init_pos_arr)
-controller.start_gc()
-time.sleep(3)
-controller.stop_gc()
+#
+# #
+# #
+# #
+# # # test controller function
+# MTM_ARM = 'MTMR'
+# use_net = 'ReLU_Dual_UDirection'
+# load_model_path = join("data", "MTMR_28002", "real", "uniform", "N4", 'D6_SinCosInput', "dual", "result", "model")
+# train_type = 'PKD'
+# model_type = 'DFNN'
+#
+#
+#
+# controller = Controller(MTM_ARM)
+# controller.load_gcc_model(model_type, load_model_path=load_model_path, use_net=use_net, train_type=train_type)
+# controller.move_MTM_joint(controller.GC_init_pos_arr)
+# controller.start_gc()
+# # time.sleep(3)
+# # controller.stop_gc()
+# controller.ros_spin()
 
