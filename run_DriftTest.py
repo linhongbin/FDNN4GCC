@@ -92,7 +92,6 @@ for i in range(sample_num):
 
     print("finish ("+str(i+1)+"/"+str(sample_num)+")")
     controller.stop_gc()
-    controller.move_MTM_joint(np.array(controller.mtm_arm.get_current_joint_position()))
     controller.move_MTM_joint(controller.GC_init_pos_arr)
 
 file_name = use_net+'_'+train_type

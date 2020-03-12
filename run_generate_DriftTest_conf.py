@@ -14,8 +14,7 @@ D = 6
 controller = Controller(MTM_ARM)
 q_mat, ready_q_mat = controller.random_testing_configuration(sample_num)
 
-q_mat = np.concatenate((q_mat, np.zeros((q_mat.shape[0], 1))), axis=1)
-ready_q_mat = np.concatenate((ready_q_mat, np.zeros((ready_q_mat.shape[0], 1))), axis=1)
+
 
 
 if not os.path.exists(save_testing_point_path):
