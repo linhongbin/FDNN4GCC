@@ -321,7 +321,7 @@ class Controller():
 
 
         self.mtm_arm.move_joint(jnt_pos_arr, interpolate = interpolate, blocking = blocking)
-        print("moving to configuration", np.degrees(jnt_pos_arr))
+        # print("moving to configuration", np.degrees(jnt_pos_arr))
         # time.sleep(0.5)
 
     def random_testing_configuration(self, sample_num):

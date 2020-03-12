@@ -8,7 +8,7 @@ import os
 MTM_ARM = 'MTMR'
 save_testing_point_path = join("data", "MTMR_28002", "real", "dirftTest", "N4", 'D6_SinCosInput', "dual")
 
-sample_num = 400
+sample_num = 200
 D = 6
 
 controller = Controller(MTM_ARM)

@@ -5,7 +5,7 @@ import pdb
 from os.path import join
 import scipy.io
 import os
-
+import datetime
 
 MTM_ARM = 'MTMR'
 use_net = 'ReLU_Dual_UDirection'
@@ -48,8 +48,8 @@ if not os.path.exists(save_result_path):
 
 
 # pdb.set_trace()
-rate = 500
-duration = 2.6
+rate = 370
+duration = 2.2
 controller.FIFO_buffer_size = rate * duration
 
 drift_pos_tensor = np.zeros((rate * duration, D, sample_num))
@@ -57,9 +57,10 @@ drift_time = np.zeros((sample_num))
 drift_pos_cnt_arr = np.zeros((sample_num))
 drift_isExceedSafeVel_arr = np.full((sample_num), True, dtype=bool)
 
-
+sum_start_time = time.clock()
 
 for i in range(sample_num):
+    loop_time = time.clock()
 
     controller.move_MTM_joint(ready_q_mat[i,:])
     time.sleep(0.3)
@@ -70,10 +71,10 @@ for i in range(sample_num):
     controller.start_gc()
 
     isExceedSafeVel = False
-    start = time.clock()
+    gcc_time = time.clock()
     controller.isExceedSafeVel =False
 
-    while not (controller.FIFO_pos_cnt==rate*duration):
+    while not (controller.FIFO_pos_cnt==rate*duration or isExceedSafeVel):
         # print(controller.FIFO_pos_cnt)
         time.sleep(0.001)
         isExceedSafeVel = controller.isExceedSafeVel
@@ -82,20 +83,28 @@ for i in range(sample_num):
     drift_isExceedSafeVel_arr[i] = isExceedSafeVel
     drift_pos_cnt_arr[i] = controller.FIFO_pos_cnt
 
-    elapsed = time.clock()
-    elapsed = elapsed - start
-    drift_time[i] = elapsed
-    print "Time spent in (function name) is: ", elapsed
+    gcc_time = time.clock() - gcc_time
+    drift_time[i] = gcc_time
 
 
     print("isExceedSafeVel: ", isExceedSafeVel)
     # print("Buffer: ", controller.FIFO_pos)
     # print("Buffer count ", controller.FIFO_pos_cnt)
 
-    print("finish ("+str(i+1)+"/"+str(sample_num)+")")
+
     controller.stop_gc()
     controller.move_MTM_joint(controller.GC_init_pos_arr)
     time.sleep(0.2)
+
+    loop_time = time.clock() - loop_time
+    sum_time = time.clock() - sum_start_time
+    total_time = sum_time*(sample_num)/(i+1)
+    print ("Time (GCC) is: ", gcc_time)
+    print ("Time (loop time) is: ", loop_time)
+    print("finish ("+str(i+1)+"/"+str(sample_num)+")"
+          +" time:"+str(datetime.timedelta(seconds=sum_time))
+          +" / "+str(datetime.timedelta(seconds=total_time)))
+
 
 file_name = use_net+'_'+train_type
 scipy.io.savemat(join(save_result_path, file_name), {'drift_pos_tensor': drift_pos_tensor,
