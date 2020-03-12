@@ -63,13 +63,13 @@ class Controller():
         self.sub_pos_topic = '/dvrk/' + MTM_ARM + '/state_joint_current'
         self.pub_isFloatMode_topic = '/dvrk/' + MTM_ARM + '/set_floating_mode'
         self.pub_isDefaultGCC_topic = '/dvrk/' + MTM_ARM + '/set_gravity_compensation'
-        self.pub_set_position_goal_joints_topic = '/dvrk/' + MTM_ARM + '/set_position_goal_joint'
+        self.pub_set_position_goal_joints_topic = '/dvrk/' + MTM_ARM + '/set_position_joint'
 
         # define publisher
-        self.pub_tor = rospy.Publisher(self.pub_tor_topic, JointState, queue_size=10)
-        self.pub_pid_position = rospy.Publisher(self.pub_set_position_goal_joints_topic, JointState, queue_size=10)
-        self.pub_isFloatMode = rospy.Publisher(self.pub_isFloatMode_topic, UInt8MultiArray, queue_size=10)
-        self.pub_isDefaultGCC = rospy.Publisher(self.pub_isDefaultGCC_topic, Bool, queue_size=10)
+        self.pub_tor = rospy.Publisher(self.pub_tor_topic, JointState, latch = True, queue_size = 1)
+        self.pub_pid_position = rospy.Publisher(self.pub_set_position_goal_joints_topic, JointState, latch = True, queue_size = 1)
+        self.pub_isFloatMode = rospy.Publisher(self.pub_isFloatMode_topic, UInt8MultiArray, latch = True, queue_size = 1)
+        self.pub_isDefaultGCC = rospy.Publisher(self.pub_isDefaultGCC_topic, Bool, latch = True, queue_size = 1)
 
 
         # define subsriber
@@ -129,7 +129,6 @@ class Controller():
 
         # switch to position control mode
         self.set_current_goal_pos()
-        pdb.set_trace()
         self.set_floating_mode(False)
         self.isFloatingMode = False
         time.sleep(0.2)
@@ -175,8 +174,7 @@ class Controller():
     def pub_zero_torques(self):
         msg = JointState()
         msg.effort = np.zeros(7).tolist()
-        for i in range(16):
-            self.pub_tor.publish(msg)
+        self.pub_tor.publish(msg)
         time.sleep(0.4)
 
 
@@ -311,11 +309,10 @@ class Controller():
     # publish topic: set_floating_mode
     def set_floating_mode(self, is_enable):
         msg = UInt8MultiArray()
-        for i in range(16):
-            if is_enable:
-                msg.data = [1, 1, 1, 1, 1, 1, 1]
-            else:
-                msg.data = [0, 0, 0, 0, 0, 0, 0]
+        if is_enable:
+            msg.data = [1, 1, 1, 1, 1, 1, 1]
+        else:
+            msg.data = [0, 0, 0, 0, 0, 0, 0]
         self.pub_isFloatMode.publish(msg)
         time.sleep(0.4)
 
@@ -394,11 +391,11 @@ class Controller():
 
         return all([is_within_lower_limit, is_within_upper_limit, is_within_coup_lower_limit, is_within_coup_upper_limit])
 
-#
-# # #
-# # #
-# # #
-# # # test controller function
+# #
+# # # #
+# # # #
+# # # #
+# # # # test controller function
 MTM_ARM = 'MTMR'
 use_net = 'ReLU_Dual_UDirection'
 load_model_path = join("data", "MTMR_28002", "real", "uniform", "N4", 'D6_SinCosInput', "dual", "result", "model")
