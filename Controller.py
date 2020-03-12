@@ -89,7 +89,6 @@ class Controller():
         if model_type == 'analytical_model':
             self.model =  MTM_MLSE4POL()
         elif model_type == 'DFNN':
-
             self.model = get_model('MTM', use_net, self.D, device='cpu')
             self.model, _, _ = load_model(load_model_path, use_net + '_' + train_type,  self.model)
         else:
@@ -369,26 +368,29 @@ class Controller():
 
 # # #
 # # # # # #
-# # # # # # #
-# # # # # # #
+# # # # # # # #
+# # # # # # # #
 # # # # # # # # test controller function
 # MTM_ARM = 'MTMR'
 # use_net = 'ReLU_Dual_UDirection'
 # load_model_path = join("data", "MTMR_28002", "real", "uniform", "N4", 'D6_SinCosInput', "dual", "result", "model")
 # train_type = 'PKD'
-# model_type = 'DFNN'
-#
+# # model_type = 'DFNN'analytical_model
+# model_type = 'analytical_model'
 #
 #
 # controller = Controller(MTM_ARM)
 # controller.load_gcc_model(model_type, load_model_path=load_model_path, use_net=use_net, train_type=train_type)
+# # controller.load_gcc_model(model_type)
+# # pdb.set_trace()
+# time.sleep(1)
 # controller.move_MTM_joint(controller.GC_init_pos_arr)
 # time.sleep(4)
 # controller.start_gc()
 # time.sleep(4)
 # # controller.stop_gc()
-# # controller.ros_spin()
-# controller.stop_gc()
-# controller.move_MTM_joint(controller.GC_init_pos_arr)
-# time.sleep(4)
-# #
+# controller.ros_spin()
+# # controller.stop_gc()
+# # controller.move_MTM_joint(controller.GC_init_pos_arr)
+# # time.sleep(4)
+# # #

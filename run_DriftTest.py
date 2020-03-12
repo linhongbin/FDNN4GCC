@@ -13,13 +13,15 @@ load_model_path = join("data", "MTMR_28002", "real", "uniform", "N4", 'D6_SinCos
 load_testing_point_path = join("data", "MTMR_28002", "real", "dirftTest", "N4", 'D6_SinCosInput', "dual")
 save_result_path = join("data", "MTMR_28002", "real", "dirftTest", "N4", 'D6_SinCosInput', "dual", "result")
 train_type = 'PKD'
-model_type = 'DFNN'
+model_type = 'analytical_model'
+# model_type = 'DFNN'
 
 
 D = 6
 
 controller = Controller(MTM_ARM)
 controller.load_gcc_model(model_type, load_model_path=load_model_path, use_net=use_net, train_type=train_type)
+time.sleep(1)
 
 q_mat = scipy.io.loadmat(join(load_testing_point_path, 'testing_points.mat'))['q_mat']
 ready_q_mat = scipy.io.loadmat(join(load_testing_point_path, 'testing_points.mat'))['ready_q_mat']
@@ -48,7 +50,10 @@ if not os.path.exists(save_result_path):
 
 
 # pdb.set_trace()
-rate = 370
+if model_type == 'analytical_model':
+    rate = 530
+else:
+    rate = 370
 duration = 2.2
 controller.FIFO_buffer_size = rate * duration
 
@@ -61,7 +66,6 @@ sum_start_time = time.clock()
 
 for i in range(sample_num):
     loop_time = time.clock()
-
     controller.move_MTM_joint(ready_q_mat[i,:])
     time.sleep(0.3)
     controller.move_MTM_joint(q_mat[i,:])
@@ -106,7 +110,10 @@ for i in range(sample_num):
           +" / "+str(datetime.timedelta(seconds=total_time)))
 
 
-file_name = use_net+'_'+train_type
+if model_type == 'DFNN':
+    file_name = use_net+'_'+train_type
+else:
+    file_name = model_type
 scipy.io.savemat(join(save_result_path, file_name), {'drift_pos_tensor': drift_pos_tensor,
                              'drift_isExceedSafeVel_arr': drift_isExceedSafeVel_arr,
                              'drift_pos_cnt_arr': drift_pos_cnt_arr,

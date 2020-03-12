@@ -262,6 +262,9 @@ class MTM_MLSE4POL():
             output_mat[i,:] = tor
         return output_mat
 
+    def predict_NP(self, input_mat):
+        return self.predict(input_mat)
+
     def random_sampling_SinCosInput(self, sample_num):
         D = 6
         q_mat = np.zeros((sample_num, D))
