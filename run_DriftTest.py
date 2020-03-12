@@ -12,9 +12,9 @@ use_net = 'ReLU_Dual_UDirection'
 load_model_path = join("data", "MTMR_28002", "real", "uniform", "N4", 'D6_SinCosInput', "dual", "result", "model")
 load_testing_point_path = join("data", "MTMR_28002", "real", "dirftTest", "N4", 'D6_SinCosInput', "dual")
 save_result_path = join("data", "MTMR_28002", "real", "dirftTest", "N4", 'D6_SinCosInput', "dual", "result")
-train_type = 'PKD'
-model_type = 'analytical_model'
-# model_type = 'DFNN'
+train_type = 'BP'
+# model_type = 'analytical_model'
+model_type = 'DFNN'
 
 
 D = 6
