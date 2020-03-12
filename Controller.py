@@ -63,17 +63,16 @@ class Controller():
         self.sub_pos_topic = '/dvrk/' + MTM_ARM + '/state_joint_current'
         self.pub_isFloatMode_topic = '/dvrk/' + MTM_ARM + '/set_floating_mode'
         self.pub_isDefaultGCC_topic = '/dvrk/' + MTM_ARM + '/set_gravity_compensation'
-        self.pub_set_position_goal_joints_topic = '/dvrk/' + MTM_ARM + '/set_position_joint'
+        self.set_position_joint_topic = '/dvrk/' + MTM_ARM + '/set_position_joint'
 
         # define publisher
-        self.pub_tor = rospy.Publisher(self.pub_tor_topic, JointState, latch = True, queue_size = 1)
-        self.pub_pid_position = rospy.Publisher(self.pub_set_position_goal_joints_topic, JointState, latch = True, queue_size = 1)
+        self.pub_tor = rospy.Publisher(self.pub_tor_topic, JointState, latch = True, queue_size = 10)
         self.pub_isFloatMode = rospy.Publisher(self.pub_isFloatMode_topic, UInt8MultiArray, latch = True, queue_size = 1)
         self.pub_isDefaultGCC = rospy.Publisher(self.pub_isDefaultGCC_topic, Bool, latch = True, queue_size = 1)
+        self.pub_set_position_joint = rospy.Publisher(self.set_position_joint_topic, JointState, latch = True, queue_size = 1)
+        self.sub_pos = rospy.Subscriber(self.sub_pos_topic, JointState, self.sub_pos_cb_with_gcc)
 
 
-        # define subsriber
-        self.sub_pos = rospy.Subscriber(self.sub_pos_topic, JointState, self.sub_pos_cb)
 
         # shut down dvrk default GCC
         self.set_default_GCC_mode(False)
@@ -105,19 +104,13 @@ class Controller():
             print("you should load the model before call start_gc().")
             return 0
 
+        self.pub_zero_torques()
+        self.set_isOutputGCC(True)
 
-
-        # set if output control torque
-        self.set_isOutputGCC(isOutputGCC)
-
-        # assign controller callback function for position subsriber
-        self.sub_pos = rospy.Subscriber(self.sub_pos_topic, JointState, self.sub_pos_cb_with_gcc)
-
-        # switch to torque control mode
         self.set_floating_mode(True)
         self.isFloatingMode = True
 
-        # set flag
+
         self.isGCCRuning = True
 
         print("GCC start")
@@ -125,39 +118,28 @@ class Controller():
 
     def stop_gc(self):
         # clear pub torque buffer
-        self.pub_zero_torques()
+        #self.pub_zero_torques()
 
-        # switch to position control mode
-        self.set_current_goal_pos()
+        # set if output control torque
+
+        # pdb.set_trace()
         self.set_floating_mode(False)
         self.isFloatingMode = False
-        time.sleep(0.2)
+        self.set_isOutputGCC(False)
+        self.pub_zero_torques()
+        time.sleep(1)
 
-        # assign controller callback function for position subsriber
-        self.sub_pos = rospy.Subscriber(self.sub_pos_topic, JointState, self.sub_pos_cb)
-
-        # set flag
+        self.set_current_pos()
+        # self.sub_pos = rospy.Subscriber(self.sub_pos_topic, JointState, self.sub_pos_cb)
         self.isGCCRuning = False
 
         print("GCC stop...")
 
     def shutdown(self):
-        self.pub_tor = rospy.Publisher(self.pub_tor_topic, JointState, latch = True, queue_size = 1)
-        self.pub_pid_position = rospy.Publisher(self.pub_set_position_goal_joints_topic, JointState, latch = True, queue_size = 1)
-        self.pub_isFloatMode = rospy.Publisher(self.pub_isFloatMode_topic, UInt8MultiArray, latch = True, queue_size = 1)
-        self.pub_isDefaultGCC = rospy.Publisher(self.pub_isDefaultGCC_topic, Bool, latch = True, queue_size = 1)
-
-        self.set_current_goal_pos()
+        self.sub_pos = None
         self.set_floating_mode(False)
         self.isFloatingMode = False
-
-        # assign controller callback function for position subsriber
-        self.sub_pos = None
-
-
-        # set flag
-        self.isGCCRuning = False
-
+        time.sleep(1)
         print("GCC Shutdown...")
 
     def update_isExceedSafeVel(self, vel_arr):
@@ -201,9 +183,6 @@ class Controller():
 
         return sign_vel
 
-    # call back function for subscribe position topic applying GCC
-    def sub_pos_cb(self, data):
-        self.current_pos_lst = data.position
 
     def sub_pos_cb_with_gcc(self, data):
 
@@ -299,12 +278,15 @@ class Controller():
                 tor[i] = self.safe_lower_torque_limit_arr[i]
         return tor
 
-
-    def set_current_goal_pos(self):
-        msg = JointState()
-        msg.position = self.current_pos_lst
-        self.pub_pid_position.publish(msg)
-        time.sleep(0.4)
+    def set_current_pos(self):
+        # msg = JointState()
+        # for i in range(10):
+        #     msg.position = self.mtm_arm.get_current_joint_position()
+        #     # print(msg.position)
+        #     self.pub_set_position_joint.publish(msg)
+        # time.sleep(0.4)
+        self.move_MTM_joint(np.array(self.mtm_arm.get_current_joint_position()),
+                            interpolate=False, blocking=True)
 
     # publish topic: set_floating_mode
     def set_floating_mode(self, is_enable):
@@ -336,13 +318,7 @@ class Controller():
         self.isOutputGCC = isOutputGCC
 
     def move_MTM_joint(self, jnt_pos_arr, interpolate = True, blocking = True):
-        if self.isGCCRuning:
-            self.stop_gc()
 
-        # # switch to position control mode
-        # self.set_floating_mode(False)
-        # self.pub_zero_torques()
-        # self.isFloatingMode = False
 
         self.mtm_arm.move_joint(jnt_pos_arr, interpolate = interpolate, blocking = blocking)
         print("moving to configuration", np.degrees(jnt_pos_arr))
@@ -391,28 +367,28 @@ class Controller():
 
         return all([is_within_lower_limit, is_within_upper_limit, is_within_coup_lower_limit, is_within_coup_upper_limit])
 
-# #
-# # # #
-# # # #
-# # # #
-# # # # test controller function
-MTM_ARM = 'MTMR'
-use_net = 'ReLU_Dual_UDirection'
-load_model_path = join("data", "MTMR_28002", "real", "uniform", "N4", 'D6_SinCosInput', "dual", "result", "model")
-train_type = 'PKD'
-model_type = 'DFNN'
-
-
-
-controller = Controller(MTM_ARM)
-controller.load_gcc_model(model_type, load_model_path=load_model_path, use_net=use_net, train_type=train_type)
-controller.move_MTM_joint(controller.GC_init_pos_arr)
-time.sleep(4)
-controller.start_gc()
-time.sleep(4)
+# # #
+# # # # # #
+# # # # # # #
+# # # # # # #
+# # # # # # # # test controller function
+# MTM_ARM = 'MTMR'
+# use_net = 'ReLU_Dual_UDirection'
+# load_model_path = join("data", "MTMR_28002", "real", "uniform", "N4", 'D6_SinCosInput', "dual", "result", "model")
+# train_type = 'PKD'
+# model_type = 'DFNN'
+#
+#
+#
+# controller = Controller(MTM_ARM)
+# controller.load_gcc_model(model_type, load_model_path=load_model_path, use_net=use_net, train_type=train_type)
+# controller.move_MTM_joint(controller.GC_init_pos_arr)
+# time.sleep(4)
+# controller.start_gc()
+# time.sleep(4)
+# # controller.stop_gc()
+# # controller.ros_spin()
 # controller.stop_gc()
-# controller.ros_spin()
-controller.stop_gc()
-controller.move_MTM_joint(controller.GC_init_pos_arr)
-time.sleep(4)
-
+# controller.move_MTM_joint(controller.GC_init_pos_arr)
+# time.sleep(4)
+# #

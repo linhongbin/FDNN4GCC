@@ -49,7 +49,7 @@ if not os.path.exists(save_result_path):
 
 # pdb.set_trace()
 rate = 500
-duration = 2.5
+duration = 2.6
 controller.FIFO_buffer_size = rate * duration
 
 drift_pos_tensor = np.zeros((rate * duration, D, sample_num))
@@ -60,18 +60,20 @@ drift_isExceedSafeVel_arr = np.full((sample_num), True, dtype=bool)
 
 
 for i in range(sample_num):
+
     controller.move_MTM_joint(ready_q_mat[i,:])
+    time.sleep(0.3)
     controller.move_MTM_joint(q_mat[i,:])
-    time.sleep(0.5)
+    time.sleep(1)
 
     controller.clear_FIFO_buffer()
     controller.start_gc()
 
     isExceedSafeVel = False
-    # while True:
     start = time.clock()
     controller.isExceedSafeVel =False
-    while not (controller.FIFO_pos_cnt==rate*duration or isExceedSafeVel):
+
+    while not (controller.FIFO_pos_cnt==rate*duration):
         # print(controller.FIFO_pos_cnt)
         time.sleep(0.001)
         isExceedSafeVel = controller.isExceedSafeVel
@@ -93,6 +95,7 @@ for i in range(sample_num):
     print("finish ("+str(i+1)+"/"+str(sample_num)+")")
     controller.stop_gc()
     controller.move_MTM_joint(controller.GC_init_pos_arr)
+    time.sleep(0.2)
 
 file_name = use_net+'_'+train_type
 scipy.io.savemat(join(save_result_path, file_name), {'drift_pos_tensor': drift_pos_tensor,
