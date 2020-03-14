@@ -3,6 +3,119 @@ from math import cos, sin
 from torch.utils.data import Dataset
 import torch
 from sklearn import preprocessing
+from math import pi
+
+
+class FK_MODEL():
+    DH_mat = None
+    method = "standard"
+
+    l_arm = 0.2794;
+    l_forearm = 0.3048 + 0.0597;
+    h = 0.1506;
+    # DH matrix for MTM
+    #            alpha    a              d          theta
+    DH_mat =   np.array([[pi/2,    0,             0,         -pi/2],
+                [0,       l_arm,         0,         -pi/2],
+                [-pi/2,   l_forearm,     0,          pi/2],
+                [pi/2,    0,             h,          0],
+                [-pi/2,   0,             0,          0],
+                [pi/2,    0,             0,         -pi/2],
+                [0,       0,             0,          pi/2]])
+    def __init__(self, ):
+        self.D = self.DH_mat.shape[0]
+
+    def set_DH_mat(self, DH_mat):
+        self.DH_mat = DH_mat
+        self.D = self.DH_mat.shape[0]
+
+
+    def forward(self, q_arr):
+        if q_arr.ndim is not 1:
+            raise Exception("q_arr dimension should be one")
+
+        T = np.eye(4)
+        for i in range(q_arr.shape[0]):
+            T = T.dot(self.forward_joint(q = q_arr[i],
+                                       d=self.DH_mat[i, 2],
+                                       theta=self.DH_mat[i, 3],
+                                       a=self.DH_mat[i, 1],
+                                       alpha=self.DH_mat[i, 0]))
+
+        return T
+
+    def forward_joint(self, q, d, theta, a, alpha):
+        if self.method == "standard":
+            T = np.linalg.multi_dot([self.trans_by_axis(d, 'z'),
+                                    self.rot_by_axis(theta+q, 'z'),
+                                    self.trans_by_axis(a, 'x'),
+                                    self.rot_by_axis(alpha, 'x')])
+        elif self.method == "modified":
+            T = np.linalg.multi_dot([self.trans_by_axis(a, 'x'),
+                                    self.rot_by_axis(alpha, 'x'),
+                                    self.trans_by_axis(d, 'z'),
+                                    self.rot_by_axis(theta+q, 'z')])
+
+        return T
+
+    def trans_by_axis(self, q, axis):
+        T = np.eye(4)
+
+        if axis ==  'x':
+            T[0,3] = q
+        elif axis == 'y':
+            T[1, 3] = q
+        elif axis == 'z':
+            T[2, 3] = q
+        else:
+            raise Exception("axis is not support")
+        return T
+
+
+    def rot_by_axis(self, q, axis):
+        T = np.eye(4)
+        c = np.cos(q)
+        s = np.sin(q)
+
+        if axis ==  'x':
+            R = np.array([[1, 0, 0],[0, c, -s],[0, s, c]])
+
+        elif axis == 'y':
+            R = np.array([[c, 0, s], [0, 1, 0], [-s, 0, c]])
+
+        elif axis == 'z':
+            R = np.array([[c, -s, 0], [s, c, 0], [0, 0, 1]])
+
+        else:
+            raise Exception("axis is not support")
+
+        T[0:3,0:3] = R
+
+        return T
+
+    def rotDiff(self, R1, R2):
+        # R1 * delta_R =  R2
+        delta_R = np.transpose(R1).dot(R2);
+        costheta = 0.5 * (delta_R[0, 0] + delta_R[1, 1] + delta_R[2, 2] - 1);
+        if (costheta >= 1.0):
+            theta = 0.0
+        elif (costheta <= -1.0):
+            theta = pi
+        else:
+            theta = np.arccos(costheta);
+
+        return theta
+
+
+    def transDiff(self, R1, R2):
+        l1 = R1[:3,3]
+        l2 = R2[:3, 3]
+        diff = l2 - l1
+        d = np.sqrt(np.sum(diff**2))
+        return d
+
+
+
 
 
 class MTM_CAD():
@@ -281,3 +394,7 @@ class MTM_MLSE4POL():
 
         output_mat = self.predict(input_mat)
         return input_mat, output_mat
+
+
+# fk_model = FK_MODEL()
+# print(fk_model.forward(np.zeros(7)))
