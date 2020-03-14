@@ -22,7 +22,7 @@ sample_num =10
 controller = Controller(MTM_ARM)
 q_mat, ready_q_mat = controller.random_testing_configuration(sample_num)
 
-
+time.sleep(1)
 sum_start_time = time.clock()
 
 for i in range(sample_num):
