@@ -17,37 +17,44 @@ fk_model = FK_MODEL()
 ################################################################################################################
 
 # define train and test path
-drift_test_result_path = join("data", "MTMR_28002", "real", "dirftTest", "N4", 'D6_SinCosInput', "dual","archive","result1")
+drift_test_result_path_lst = [join("data", "MTMR_28002", "real", "dirftTest", "N4", 'D6_SinCosInput', "dual","archive","result1"),
+                              join("data", "MTMR_28002", "real", "dirftTest", "N4", 'D6_SinCosInput', "dual","archive","result1")]
+
 D = 6
+mean_arr_lst_lst = []
+for drift_test_result_path in drift_test_result_path_lst:
+    drift_mat_lst = []
+    cartes_dirft_mat_lst = []
+    mean_arr_lst = []
+    file_name_lst = ["analytical_model", "ReLU_Dual_UDirection_BP", "ReLU_Dual_UDirection_PKD"]
+    for file_name in file_name_lst:
+        drift_pos_tensor = sio.loadmat(join(drift_test_result_path,file_name))['drift_pos_tensor']
+        drift_pos_cnt_arr = sio.loadmat(join(drift_test_result_path,file_name))['drift_pos_cnt_arr']
+        sample_num = drift_pos_tensor.shape[2]
+        drift_mat = np.zeros((sample_num, D+2 ))
+        for i in range(sample_num):
+            start_jnt_arr = drift_pos_tensor[-1,:,i]
+            end_jnt_arr = drift_pos_tensor[0,:,i]
+            drift_mat[i,:D] = end_jnt_arr - start_jnt_arr
 
+            T_start = fk_model.forward(np.append(start_jnt_arr, 0))
+            T_end = fk_model.forward(np.append(end_jnt_arr, 0))
+            d = fk_model.transDiff(T_start, T_end)
+            theta = fk_model.rotDiff(T_start, T_end)
+            drift_mat[i,D] = d
+            drift_mat[i, D+1] = theta
 
-drift_mat_lst = []
+        # print(drift_mat)
+        drift_mat_lst.append(drift_mat)
+        mean_arr_lst.append(np.mean(drift_mat, axis=0))
+        # print(mean_arr_lst[-1])
+        mean_arr_lst_lst.append(mean_arr_lst)
 
-cartes_dirft_mat_lst = []
-mean_arr_lst = []
-file_name_lst = ["analytical_model", "ReLU_Dual_UDirection_BP", "ReLU_Dual_UDirection_PKD"]
-for file_name in file_name_lst:
-    drift_pos_tensor = sio.loadmat(join(drift_test_result_path,file_name))['drift_pos_tensor']
-    drift_pos_cnt_arr = sio.loadmat(join(drift_test_result_path,file_name))['drift_pos_cnt_arr']
-    sample_num = drift_pos_tensor.shape[2]
-    drift_mat = np.zeros((sample_num, D+2 ))
-    for i in range(sample_num):
-        start_jnt_arr = drift_pos_tensor[-1,:,i]
-        end_jnt_arr = drift_pos_tensor[0,:,i]
-        drift_mat[i,:D] = end_jnt_arr - start_jnt_arr
-
-        T_start = fk_model.forward(np.append(start_jnt_arr, 0))
-        T_end = fk_model.forward(np.append(end_jnt_arr, 0))
-        d = fk_model.transDiff(T_start, T_end)
-        theta = fk_model.rotDiff(T_start, T_end)
-        drift_mat[i,D] = d
-        drift_mat[i, D+1] = theta
-
-    # print(drift_mat)
-    drift_mat_lst.append(drift_mat)
-    mean_arr_lst.append(np.mean(drift_mat, axis=0))
-    print(mean_arr_lst[-1])
-
+mean_arr_result_lst = []
+for i in range(3):
+    result = (mean_arr_lst_lst[0][i]+ mean_arr_lst_lst[1][i])/2
+    print(result)
+    mean_arr_result_lst.append(result)
 
 # for i in range(len(mean_arr_lst)):
 #     mean_arr_lst[i] = np.append(mean_arr_lst[i], np.mean(mean_arr_lst[i]))
