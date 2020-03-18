@@ -19,7 +19,7 @@ fk_model = FK_MODEL()
 save_pdf_path = join("data", "MTMR_28002", "real", "dirftTest", "N4", 'D6_SinCosInput', "dual",'result')
 # define train and test path
 drift_test_result_path_lst = [join("data", "MTMR_28002", "real", "dirftTest", "N4", 'D6_SinCosInput', "dual","archive","result1"),
-                              join("data", "MTMR_28002", "real", "dirftTest", "N4", 'D6_SinCosInput', "dual","archive","result1")]
+                              join("data", "MTMR_28002", "real", "dirftTest", "N4", 'D6_SinCosInput', "dual","archive","result2")]
 
 D = 6
 mean_arr_lst_lst = []
@@ -126,7 +126,8 @@ for i in range(len(mean_arr_result_lst)):
 
 ax.set_xticks(jnt_index)
 labels = ['Joint '+str(i+1) for i in range(6)]
-labels.extend([r'$l^{e}$',r'$\theta^{e}$'])
+labels.extend([r'Tip${}^T$',r'Tip${}^{R}$'])
+# labels.extend(['Tip^R',r'Tip${}_{R}$'])
 # ax.set_title('Absolute RMSE for Trajectory Test')
 ax.yaxis.grid(True)
 
@@ -161,7 +162,7 @@ if not os.path.exists(save_pdf_path):
     os.makedirs(save_pdf_path)
 
 
-fig.savefig(join(save_pdf_path,'TrajTest_AbsRMS.pdf'),bbox_inches='tight')
+fig.savefig(join(save_pdf_path,'DriftTest_all.pdf'),bbox_inches='tight')
 
 #
 #

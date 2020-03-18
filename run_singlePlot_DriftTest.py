@@ -18,16 +18,20 @@ fk_model = FK_MODEL()
 ################################################################################################################
 save_pdf_path = join("data", "MTMR_28002", "real", "dirftTest", "N4", 'D6_SinCosInput', "dual",'result')
 # define train and test path
-drift_test_result_path = join("data", "MTMR_28002", "real", "dirftTest", "N4", 'D6_SinCosInput', "dual","archive","result2")
+drift_test_result_path = join("data", "MTMR_28002", "real", "dirftTest", "N4", 'D6_SinCosInput', "dual","archive","result1")
 D = 6
-sample_idx = 100
+sample_idx = 20
 file_name_lst = ["analytical_model", "ReLU_Dual_UDirection_BP", "ReLU_Dual_UDirection_PKD"]
+
+
 
 d_arr_lst = []
 theta_arr_lst = []
+drift_time_lst = []
 for file_name in file_name_lst:
     drift_pos_tensor = sio.loadmat(join(drift_test_result_path,file_name))['drift_pos_tensor']
     drift_pos_cnt_arr = sio.loadmat(join(drift_test_result_path,file_name))['drift_pos_cnt_arr']
+    drift_time = sio.loadmat(join(drift_test_result_path, file_name))['drift_time']
     sample_num = int(drift_pos_cnt_arr[0][sample_idx])
     drift_mat = drift_pos_tensor[drift_pos_tensor.shape[0]-sample_num:,:,sample_idx]
     drift_mat = np.flip(drift_mat, axis=0)
@@ -41,11 +45,11 @@ for file_name in file_name_lst:
         theta = fk_model.rotDiff(T_start, T_end)
         d_arr[j] = d*1000
         theta_arr[j] = np.degrees(theta)
-        d_arr[j] = d
-        theta_arr[j] = theta
+
 
     d_arr_lst.append(d_arr)
     theta_arr_lst.append(theta_arr)
+    drift_time_lst.append(drift_time[0][sample_idx])
 
 
 
@@ -57,33 +61,44 @@ for file_name in file_name_lst:
 legend_list = ['Model in [32]', 'DFNN with LfS', 'DFNN with PKD']
 
 
-fig, ax = plt.subplots(figsize=(8, 4))
+fig, ax = plt.subplots(2, figsize=(6, 4))
 fontsize = 30
 fill_color_list = ['tab:blue','tab:orange', 'tab:green']
 
 for i in range(3):
-    x = list(range(d_arr_lst[i].shape[0]))
-    ax.plot(x, d_arr_lst[i].tolist(),color=fill_color_list[i], alpha=0.8, label=legend_list[i])
+    x = np.linspace(0,drift_time_lst[i], d_arr_lst[i].shape[0])
+    ax[0].plot(x.tolist(), d_arr_lst[i].tolist(),color=fill_color_list[i], alpha=0.8, label=legend_list[i])
+    ax[1].plot(x.tolist(), theta_arr_lst[i].tolist(), color=fill_color_list[i], alpha=0.8, label=legend_list[i])
 
-ax.yaxis.grid(True)
+ax[0].yaxis.grid(True)
+ax[1].yaxis.grid(True)
 
 # maxValue = max([max(list) for list in abs_rms_list])
 
-csfont = {'fontname':'Times New Roman'}
 
+csfont = {'family' : 'Times New Roman',
+        'weight' : 'bold',
+        'size'   : 14}
 # Save the figure and show
-ax.set_xlabel('time (s)',**csfont, fontsize=14)
-ax.set_ylabel(r'Drift (Deg/mm)',**csfont, fontsize=14)
+ax[1].set_xlabel('time (s)',**csfont, fontsize=14)
+ax[0].set_ylabel(r'Drift (mm)',**csfont, fontsize=14)
+ax[1].set_ylabel(r'Drift (Deg)',**csfont, fontsize=14)
 
 # plt.yscale('log',basey=10)
 
-ax.margins(y=.1, x=.03)
+ax[0].margins(y=.1, x=.03)
+ax[1].margins(y=.1, x=.03)
 
-plt.rcParams["font.family"] = "Times New Roman"
+font = matplotlib.font_manager.FontProperties(family='Times New Roman')
+ax[0].legend(loc='upper center', prop=font, bbox_to_anchor=(0.5, 1.5),
+          fancybox=True, shadow=True, ncol=3, fontsize=14)
 
-ax.legend(fontsize=14)
-plt.xticks(fontsize=14)
-plt.yticks(fontsize=14)
+ax[0].tick_params(axis='both', which='major', labelsize=14)
+ax[0].tick_params(axis='both', which='minor', labelsize=14)
+ax[1].tick_params(axis='both', which='major', labelsize=14)
+ax[1].tick_params(axis='both', which='minor', labelsize=14)
+# ax[0].set_tick_params(labelsize=14)
+# ax[1].set_tick_params(labelsize=14)
 plt.tick_params(
     axis='x',          # changes apply to the x-axis
     which='both',      # both major and minor ticks are affected
@@ -93,11 +108,11 @@ plt.tick_params(
 plt.tight_layout()
 plt.show()
 #
-# if not os.path.exists(save_pdf_path):
-#     os.makedirs(save_pdf_path)
-#
-#
-# fig.savefig(join(save_pdf_path,'TrajTest_AbsRMS.pdf'),bbox_inches='tight')
+if not os.path.exists(save_pdf_path):
+    os.makedirs(save_pdf_path)
+
+
+fig.savefig(join(save_pdf_path,'DriftTest_single.pdf'),bbox_inches='tight')
 
 #
 #
