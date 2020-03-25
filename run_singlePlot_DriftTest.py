@@ -56,19 +56,19 @@ for file_name in file_name_lst:
 
 
 
-
+paperFontSize = 14
+paperLineWidth =2.5
 
 legend_list = ['Model in [32]', 'DFNN with LfS', 'DFNN with PKD']
 
 
 fig, ax = plt.subplots(2, figsize=(6, 4))
-fontsize = 30
 fill_color_list = ['tab:blue','tab:orange', 'tab:green']
 
 for i in range(3):
     x = np.linspace(0,drift_time_lst[i], d_arr_lst[i].shape[0])
-    ax[0].plot(x.tolist(), d_arr_lst[i].tolist(),color=fill_color_list[i], alpha=0.8, label=legend_list[i])
-    ax[1].plot(x.tolist(), theta_arr_lst[i].tolist(), color=fill_color_list[i], alpha=0.8, label=legend_list[i])
+    ax[0].plot(x.tolist(), d_arr_lst[i].tolist(),color=fill_color_list[i], alpha=0.8, label=legend_list[i],linewidth=paperLineWidth)
+    ax[1].plot(x.tolist(), theta_arr_lst[i].tolist(), color=fill_color_list[i], alpha=0.8, label=legend_list[i],linewidth=paperLineWidth)
 
 ax[0].yaxis.grid(True)
 ax[1].yaxis.grid(True)
@@ -78,11 +78,17 @@ ax[1].yaxis.grid(True)
 
 csfont = {'family' : 'Times New Roman',
         'weight' : 'bold',
-        'size'   : 14}
+        'fontsize'   : paperFontSize}
 # Save the figure and show
-ax[1].set_xlabel('time (s)',**csfont, fontsize=14)
-ax[0].set_ylabel(r'Drift (mm)',**csfont, fontsize=14)
-ax[1].set_ylabel(r'Drift (Deg)',**csfont, fontsize=14)
+ax[1].set_xlabel('time (s)',**csfont)
+ax[0].set_ylabel(r'Drift (mm)',**csfont)
+ax[1].set_ylabel(r'Drift (Deg)',**csfont)
+plt.axes(ax[0])
+a = plt.gca()
+a.set_yticklabels(a.get_yticks(), **csfont)
+plt.axes(ax[1])
+a = plt.gca()
+a.set_yticklabels(a.get_yticks(), **csfont)
 
 # plt.yscale('log',basey=10)
 
@@ -91,20 +97,22 @@ ax[1].margins(y=.1, x=.03)
 
 font = matplotlib.font_manager.FontProperties(family='Times New Roman')
 ax[0].legend(loc='upper center', prop=font, bbox_to_anchor=(0.5, 1.5),
-          fancybox=True, shadow=True, ncol=3, fontsize=14)
+          fancybox=True, shadow=True, ncol=3, fontsize=paperFontSize)
 
-ax[0].tick_params(axis='both', which='major', labelsize=14)
-ax[0].tick_params(axis='both', which='minor', labelsize=14)
-ax[1].tick_params(axis='both', which='major', labelsize=14)
-ax[1].tick_params(axis='both', which='minor', labelsize=14)
-# ax[0].set_tick_params(labelsize=14)
-# ax[1].set_tick_params(labelsize=14)
+ax[0].tick_params(axis='both', which='major', labelsize=paperFontSize)
+ax[0].tick_params(axis='both', which='minor', labelsize=paperFontSize)
+ax[1].tick_params(axis='both', which='major', labelsize=paperFontSize)
+ax[1].tick_params(axis='both', which='minor', labelsize=paperFontSize)
+# ax[0].set_tick_params(labelsize=paperFontSize)
+# ax[1].set_tick_params(labelsize=paperFontSize)
 plt.tick_params(
     axis='x',          # changes apply to the x-axis
     which='both',      # both major and minor ticks are affected
     bottom=False,      # ticks along the bottom edge are off
     top=False)
-
+plt.axes(ax[0])
+plt.tight_layout()
+plt.axes(ax[1])
 plt.tight_layout()
 plt.show()
 #
@@ -136,11 +144,11 @@ fig.savefig(join(save_pdf_path,'DriftTest_single.pdf'),bbox_inches='tight')
 # plt.ylim(0, maxValue*1.2)
 #
 # # Save the figure and show
-# ax.set_xticklabels(labels, fontsize=14)
-# ax.set_ylabel(r'$\epsilon_{rms}\%$', fontsize=14)
-# ax.legend(fontsize=14)
-# plt.xticks(fontsize=14)
-# plt.yticks(fontsize=14)
+# ax.set_xticklabels(labels, fontsize=paperFontSize)
+# ax.set_ylabel(r'$\epsilon_{rms}\%$', fontsize=paperFontSize)
+# ax.legend(fontsize=paperFontSize)
+# plt.xticks(fontsize=paperFontSize)
+# plt.yticks(fontsize=paperFontSize)
 # plt.tight_layout()
 # plt.show()
 # fig.savefig(join(train_data_path, "result",'TrajTest_RelRMS.pdf'),bbox_inches='tight')

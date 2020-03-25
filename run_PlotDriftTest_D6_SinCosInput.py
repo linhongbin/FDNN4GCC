@@ -105,7 +105,7 @@ for i in range(3):
 
 
 
-
+paperFontSize = 14
 
 legend_list = ['Model in [32]', 'DFNN with LfS', 'DFNN with PKD']
 
@@ -134,11 +134,14 @@ ax.yaxis.grid(True)
 # maxValue = max([max(list) for list in abs_rms_list])
 
 maxValue = max([max(max_arr_result.tolist()) for max_arr_result in max_arr_result_lst])
-csfont = {'fontname':'Times New Roman'}
+csfont = {'fontname':'Times New Roman', 'fontsize':paperFontSize}
 
 # Save the figure and show
-ax.set_xticklabels(labels,**csfont, fontsize=14)
-ax.set_ylabel(r'Drift (Deg/mm)',**csfont, fontsize=14)
+ax.set_xticklabels(labels,**csfont)
+ax.set_ylabel(r'Drift (Deg/mm)',**csfont, )
+
+a = plt.gca()
+a.set_yticklabels(a.get_yticks(), **csfont)
 
 plt.yscale('log',basey=10)
 
@@ -146,9 +149,9 @@ ax.margins(y=.1, x=.03)
 
 plt.rcParams["font.family"] = "Times New Roman"
 
-ax.legend(fontsize=14)
-plt.xticks(fontsize=14)
-plt.yticks(fontsize=14)
+ax.legend(fontsize=paperFontSize)
+plt.xticks(fontsize=paperFontSize)
+plt.yticks(fontsize=paperFontSize)
 plt.tick_params(
     axis='x',          # changes apply to the x-axis
     which='both',      # both major and minor ticks are affected
@@ -186,11 +189,11 @@ fig.savefig(join(save_pdf_path,'DriftTest_all.pdf'),bbox_inches='tight')
 # plt.ylim(0, maxValue*1.2)
 #
 # # Save the figure and show
-# ax.set_xticklabels(labels, fontsize=14)
-# ax.set_ylabel(r'$\epsilon_{rms}\%$', fontsize=14)
-# ax.legend(fontsize=14)
-# plt.xticks(fontsize=14)
-# plt.yticks(fontsize=14)
+# ax.set_xticklabels(labels, fontsize=paperFontSize)
+# ax.set_ylabel(r'$\epsilon_{rms}\%$', fontsize=paperFontSize)
+# ax.legend(fontsize=paperFontSize)
+# plt.xticks(fontsize=paperFontSize)
+# plt.yticks(fontsize=paperFontSize)
 # plt.tight_layout()
 # plt.show()
 # fig.savefig(join(train_data_path, "result",'TrajTest_RelRMS.pdf'),bbox_inches='tight')

@@ -64,7 +64,7 @@ test_output_hat_mat_List.append(model.predict_NP(test_input_mat))
 
 
 
-legend_list = ['Physical Teacher Model', 'DFNN with LfS', 'DFNN with PKD']
+legend_list = ['Model in [32]', 'DFNN with LfS', 'DFNN with PKD']
 
 
 # plot predict error bar figures
@@ -88,8 +88,13 @@ for i in range(len(rel_rms_list)):
 
 
 
+paperFontSize = 16
 jnt_index = np.arange(1,8)
 fig, ax = plt.subplots()
+# matplotlib.rc('text', usetex=True)
+# matplotlib.rcParams['text.latex.preamble']=[r"\usepackage{amsmath}"]
+
+plt.rcParams["font.family"] = "Times New Roman"
 w = 0.2
 space = 0.2
 capsize = 2
@@ -97,7 +102,7 @@ fontsize = 30
 fill_color_list = ['tab:blue','tab:orange', 'tab:green']
 
 for i in range(len(abs_rms_list)):
-    ax.bar(jnt_index+space*(i-1), abs_rms_list[i],  width=w,align='center', color=fill_color_list[i], alpha=0.6, ecolor='black', capsize=capsize, label=legend_list[i])
+    ax.bar(jnt_index+space*(i-1), abs_rms_list[i],  width=w,align='center', color=fill_color_list[i], alpha=0.8, ecolor='black', capsize=capsize, label=legend_list[i])
 
 ax.set_xticks(jnt_index)
 labels = ['Joint '+str(i+1) for i in range(6)]
@@ -105,15 +110,21 @@ labels.append('Avg')
 # ax.set_title('Absolute RMSE for Trajectory Test')
 ax.yaxis.grid(True)
 ax.autoscale(tight=True)
-maxValue = max([max(list) for list in abs_rms_list])
-plt.ylim(0, maxValue*1.2)
+# maxValue = max([max(list) for list in abs_rms_list])
+# plt.ylim(0, maxValue*1.2)
+ax.margins(y=.1, x=.03)
 
 # Save the figure and show
-ax.set_xticklabels(labels, fontsize=14)
-ax.set_ylabel(r'$\epsilon_{rms}$', fontsize=14)
-ax.legend(fontsize=14)
-plt.xticks(fontsize=14)
-plt.yticks(fontsize=14)
+csfont = {'fontname':'Times New Roman', 'fontsize':paperFontSize}
+ax.set_xticklabels(labels, **csfont)
+ax.set_ylabel(r'$\epsilon_{rms}$ (N.m)', **csfont)
+a = plt.gca()
+a.set_yticklabels(a.get_yticks(), **csfont)
+ax.legend(fontsize=paperFontSize)
+plt.xticks(fontsize=paperFontSize)
+plt.yticks(fontsize=paperFontSize)
+
+
 plt.tight_layout()
 plt.show()
 fig.savefig(join(train_data_path, "result",'TrajTest_AbsRMS.pdf'),bbox_inches='tight')
@@ -122,13 +133,15 @@ fig.savefig(join(train_data_path, "result",'TrajTest_AbsRMS.pdf'),bbox_inches='t
 
 jnt_index = np.arange(1,8)
 fig, ax = plt.subplots()
+
+plt.rcParams["font.family"] = "Times New Roman"
 w = 0.2
 space = 0.2
 capsize = 2
 fontsize = 30
 
 for i in range(len(rel_rms_list)):
-    ax.bar(jnt_index+space*(i-1), rel_rms_list[i],  width=w,align='center', color=fill_color_list[i], alpha=0.6, ecolor='black', capsize=capsize, label=legend_list[i])
+    ax.bar(jnt_index+space*(i-1), rel_rms_list[i],  width=w,align='center', color=fill_color_list[i], alpha=0.8, ecolor='black', capsize=capsize, label=legend_list[i])
 
 ax.set_xticks(jnt_index)
 labels = ['Joint '+str(i+1) for i in range(6)]
@@ -136,15 +149,19 @@ labels.append('Avg')
 # ax.set_title('Absolute RMSE for Trajectory Test')
 ax.yaxis.grid(True)
 ax.autoscale(tight=True)
-maxValue = max([max(list) for list in rel_rms_list])
-plt.ylim(0, maxValue*1.2)
+# maxValue = max([max(list) for list in rel_rms_list])
+# plt.ylim(0, maxValue*1.2)
+ax.margins(y=.1, x=.03)
 
 # Save the figure and show
-ax.set_xticklabels(labels, fontsize=14)
-ax.set_ylabel(r'$\epsilon_{rms}\%$', fontsize=14)
-ax.legend(fontsize=14)
-plt.xticks(fontsize=14)
-plt.yticks(fontsize=14)
+csfont = {'fontname':'Times New Roman', 'fontsize':paperFontSize}
+ax.set_xticklabels(labels, **csfont)
+ax.set_ylabel(r'$\epsilon_{rms}$% (N.m)',  **csfont)
+a = plt.gca()
+a.set_yticklabels(a.get_yticks(), **csfont)
+ax.legend(fontsize=paperFontSize)
+plt.xticks(fontsize=paperFontSize)
+plt.yticks(fontsize=paperFontSize)
 plt.tight_layout()
 plt.show()
 fig.savefig(join(train_data_path, "result",'TrajTest_RelRMS.pdf'),bbox_inches='tight')
