@@ -30,41 +30,31 @@ test_ouput_mat = test_dataset.y_data.numpy()
 
 test_output_hat_mat_List = []
 legend_list = []
-#
-# # get predict CAD Model output
-# MTM_CAD_model = MTM_CAD()
-# test_output_hat_mat_List.append(MTM_CAD_model.predict(test_input_mat))
-# legend_list.append('CAD')
-
-# get predict MLSE4POL Model output
-MTM_MLSE4POL_Model = MTM_MLSE4POL()
-test_output_hat_mat_List.append(MTM_MLSE4POL_Model.predict(test_input_mat))
 
 
 
 device = 'cpu'
 D = 6
+
+norm_type_lst = ['noInOutNorm', 'noOutNorm', 'noInNorm', None]
 # get predict DNN with Knowledge Distillation output
-use_net = 'ReLU_Dual_UDirection'
-train_type = 'BP'
-load_model_path = join(train_data_path, "result", "model")
-model = get_model('MTM', use_net, D, device=device)
-model, _, _ = load_model(load_model_path, use_net+'_'+train_type, model)
-test_output_hat_mat_List.append(model.predict_NP(test_input_mat))
+
+for norm_type in norm_type_lst:
+    use_net = 'ReLU_Dual_UDirection'
+    train_type = 'PKD'
+    load_model_path = join(train_data_path, "result", "model")
+    model = get_model('MTM', use_net, D, device=device)
+    if norm_type is not None:
+        load_name =  use_net+'_'+train_type+'_'+norm_type
+    else:
+        load_name = use_net + '_' + train_type
+    model, _, _ = load_model(load_model_path,load_name, model)
+    test_output_hat_mat_List.append(model.predict_NP(test_input_mat))
 
 
 
-# get predict DNN with Knowledge Distillation output
-use_net = 'ReLU_Dual_UDirection'
-train_type = 'PKD'
-load_model_path = join(train_data_path, "result", "model")
-model = get_model('MTM', use_net, D, device=device)
-model, _, _ = load_model(load_model_path, use_net+'_'+train_type, model)
-test_output_hat_mat_List.append(model.predict_NP(test_input_mat))
 
-
-
-legend_list = ['Model in [32]', 'DFNN with LfS', 'DFNN with PKD']
+legend_list = ['Without Norm', 'Input Norm', 'Output Norm', 'Input-Output Norm']
 
 
 # plot predict error bar figures
@@ -99,7 +89,7 @@ jnt_index = np.arange(1,8)
 # space = 0.2
 # capsize = 2
 # fontsize = 30
-# fill_color_list = ['tab:green', 'tab:orange', 'tab:blue']
+# fill_color_list = ['tab:blue','tab:orange', 'tab:green']
 #
 # for i in range(len(abs_rms_list)):
 #     ax.bar(jnt_index+space*(i-1), abs_rms_list[i],  width=w,align='center', color=fill_color_list[i], alpha=0.8, ecolor='black', capsize=capsize, label=legend_list[i])
@@ -128,21 +118,21 @@ jnt_index = np.arange(1,8)
 # plt.tight_layout()
 # plt.show()
 # fig.savefig(join(train_data_path, "result",'TrajTest_AbsRMS.pdf'),bbox_inches='tight')
-
+#
 
 
 jnt_index = np.arange(1,8)
-fig, ax = plt.subplots(figsize=(8, 4))
-fill_color_list = ['tab:green', 'tab:orange', 'tab:blue']
+fig, ax = plt.subplots(figsize=(6.5, 4))
 
 plt.rcParams["font.family"] = "Times New Roman"
 w = 0.2
 space = 0.2
 capsize = 2
 fontsize = 30
+fill_color_list = ['#99C2FF','#66B2FF','#3399FF','tab:blue']
 
 for i in range(len(rel_rms_list)):
-    ax.bar(jnt_index+space*(i-1), rel_rms_list[i],  width=w,align='center', color=fill_color_list[i], alpha=0.8, ecolor='black', capsize=capsize, label=legend_list[i])
+    ax.bar(jnt_index+space*(i-2)+w/2, rel_rms_list[i],  width=w,align='center', color=fill_color_list[i], alpha=0.8, ecolor='black', capsize=capsize, label=legend_list[i])
 
 ax.set_xticks(jnt_index)
 labels = ['Joint '+str(i+1) for i in range(6)]
@@ -160,15 +150,17 @@ ax.set_xticklabels(labels, **csfont)
 ax.set_ylabel(r'$\epsilon_{rms}$% (N.m)',  **csfont)
 a = plt.gca()
 a.set_yticklabels(a.get_yticks(), **csfont)
-
+# ax.legend(fontsize=paperFontSize)
 font = matplotlib.font_manager.FontProperties(family='Times New Roman',size=paperFontSize)
-ax.legend(loc='upper center', prop=font, bbox_to_anchor=(0.5, 1.2),
-          fancybox=True, shadow=True, ncol=3)
+ax.legend(loc='upper center', prop=font, bbox_to_anchor=(0.5, 1.4),
+          fancybox=True, shadow=True, ncol=2)
+
+# plot.legend(loc=2, prop={'size': 6})
 plt.xticks(fontsize=paperFontSize)
 plt.yticks(fontsize=paperFontSize)
 plt.tight_layout()
 plt.show()
-fig.savefig(join(train_data_path, "result",'TrajTest_RelRMS.pdf'),bbox_inches='tight')
+fig.savefig(join(train_data_path, "result",'NormTest_RelRMS.pdf'),bbox_inches='tight')
 
 
 print('Avg Absolute RMSE: ',[lst[-1] for lst in abs_rms_list])

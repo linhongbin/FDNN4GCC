@@ -62,8 +62,8 @@ paperLineWidth =2.5
 legend_list = ['Model in [32]', 'DFNN with LfS', 'DFNN with PKD']
 
 
-fig, ax = plt.subplots(2, figsize=(6, 4))
-fill_color_list = ['tab:blue','tab:orange', 'tab:green']
+fig, ax = plt.subplots(2, figsize=(6.7, 4))
+fill_color_list = ['tab:green','tab:orange','tab:blue']
 
 for i in range(3):
     x = np.linspace(0,drift_time_lst[i], d_arr_lst[i].shape[0])
@@ -85,9 +85,11 @@ ax[0].set_ylabel(r'Drift (mm)',**csfont)
 ax[1].set_ylabel(r'Drift (Deg)',**csfont)
 plt.axes(ax[0])
 a = plt.gca()
+a.set_xticklabels(a.get_xticks(), **csfont)
 a.set_yticklabels(a.get_yticks(), **csfont)
 plt.axes(ax[1])
 a = plt.gca()
+a.set_xticklabels(a.get_xticks(), **csfont)
 a.set_yticklabels(a.get_yticks(), **csfont)
 
 # plt.yscale('log',basey=10)
@@ -95,9 +97,9 @@ a.set_yticklabels(a.get_yticks(), **csfont)
 ax[0].margins(y=.1, x=.03)
 ax[1].margins(y=.1, x=.03)
 
-font = matplotlib.font_manager.FontProperties(family='Times New Roman')
-ax[0].legend(loc='upper center', prop=font, bbox_to_anchor=(0.5, 1.5),
-          fancybox=True, shadow=True, ncol=3, fontsize=paperFontSize)
+font = matplotlib.font_manager.FontProperties(family='Times New Roman',size=paperFontSize)
+ax[0].legend(loc='upper center', prop=font, bbox_to_anchor=(0.5, 1.42),
+          fancybox=True, shadow=True, ncol=3)
 
 ax[0].tick_params(axis='both', which='major', labelsize=paperFontSize)
 ax[0].tick_params(axis='both', which='minor', labelsize=paperFontSize)

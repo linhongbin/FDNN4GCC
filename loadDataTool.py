@@ -210,7 +210,7 @@ def load_teacher_train_data(teacherModel, sample_num, batch_size, device, input_
                                   shuffle=True)
 
 
-def load_preProcessData(train_data_dir, batch_size, device, valid_data_path = None, valid_ratio = 0.2,teacherModel=None, teacher_sample_num=None):
+def load_preProcessData(train_data_dir, batch_size, device, valid_data_path = None, valid_ratio = 0.2,teacherModel=None, teacher_sample_num=None, is_inputNormalized=True, is_outputNormalized=True):
 
     # load sampled train data
     D = 6
@@ -243,10 +243,19 @@ def load_preProcessData(train_data_dir, batch_size, device, valid_data_path = No
         total_input_mat = np.concatenate((total_input_mat, teacher_input_mat), axis=0)
         total_output_mat = np.concatenate((total_output_mat, teacher_output_mat), axis=0)
 
-    input_mean = np.mean(total_input_mat[:,:D*2], axis=0)
-    output_mean = np.mean(total_output_mat, axis=0)
-    input_std = np.std(total_input_mat[:,:D*2], axis=0)
-    output_std = np.std(total_output_mat, axis=0)
+    if is_inputNormalized:
+        input_mean = np.mean(total_input_mat[:,:D*2], axis=0)
+        input_std = np.std(total_input_mat[:,:D*2], axis=0)
+    else:
+        input_mean = np.zeros(D*2)
+        input_std = np.ones(D*2)
+
+    if is_outputNormalized:
+        output_mean = np.mean(total_output_mat, axis=0)
+        output_std = np.std(total_output_mat, axis=0)
+    else:
+        output_mean = np.zeros(D)
+        output_std = np.ones(D)
 
     # # Joint 1 data is too little, so have to set normalized param to unit
     # input_mean[0] = 1

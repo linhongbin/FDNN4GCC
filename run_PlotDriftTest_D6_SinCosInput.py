@@ -112,12 +112,12 @@ legend_list = ['Model in [32]', 'DFNN with LfS', 'DFNN with PKD']
 #import matplotlib as mpl
 #mpl.style.use('seaborn')
 jnt_index = np.arange(1, 9)
-fig, ax = plt.subplots(figsize=(8, 4))
+fig, ax = plt.subplots(figsize=(7.5, 4))
 w = 0.2
 space = 0.2
 capsize = 2
 fontsize = 30
-fill_color_list = ['tab:blue','tab:orange', 'tab:green']
+fill_color_list = ['tab:orange', 'tab:green','tab:blue']
 
 for i in range(len(mean_arr_result_lst)):
     ax.bar(jnt_index+space*(i-1), (mean_arr_result_lst[i]).tolist(), yerr=[(mean_arr_result_lst[i]-min_arr_result_lst[i]).tolist(),
@@ -149,7 +149,10 @@ ax.margins(y=.1, x=.03)
 
 plt.rcParams["font.family"] = "Times New Roman"
 
-ax.legend(fontsize=paperFontSize)
+font = matplotlib.font_manager.FontProperties(family='Times New Roman',size=paperFontSize)
+ax.legend(loc='upper center', prop=font, bbox_to_anchor=(0.5, 1.18),
+          fancybox=True, shadow=True, ncol=3)
+
 plt.xticks(fontsize=paperFontSize)
 plt.yticks(fontsize=paperFontSize)
 plt.tick_params(
