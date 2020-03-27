@@ -88,7 +88,7 @@ def train(model, train_loader, valid_loader, optimizer, loss_fn, early_stopping,
         plt.show()
         # fig.savefig(pjoin('model','LogNet',model_file_name+'.png'), bbox_inches='tight')
 
-    return model
+    return model, avg_train_losses, avg_valid_losses
 
 def multiTask_train(modelList, train_loaderList, valid_loaderList, optimizer, loss_fn, early_stopping, max_training_epoch, is_plot=True):
     train_losses = []
@@ -320,9 +320,12 @@ def KDtrain(model, train_loader, valid_loader, Teacher_trainLoader, optimizer, l
         plt.legend()
         plt.tight_layout()
         plt.show()
+
         # fig.savefig(pjoin('model','LogNet',model_file_name+'.png'), bbox_inches='tight')
 
-    return model
+
+
+    return model, avg_train_losses, avg_valid_losses
 
 
 # Multi-Head

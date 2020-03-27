@@ -8,6 +8,7 @@ from os import mkdir
 from loadModel import get_model, save_model
 from HyperParam import get_hyper_param
 from AnalyticalModel import *
+import scipy
 
 def loop_func(train_data_path, test_data_path, use_net, robot, train_type='BP', valid_data_path=None, is_sim = False, is_inputNormalized=True, is_outputNormalized=True):
     param_dict = get_hyper_param(robot, train_type=train_type, is_sim=is_sim)
@@ -57,9 +58,9 @@ def loop_func(train_data_path, test_data_path, use_net, robot, train_type='BP', 
     ### Train model
     model.set_normalized_param(input_mean, input_std, output_mean, output_std)
     if train_type=='BP':
-        model = train(model, train_loader, valid_loader, optimizer, loss_fn, early_stopping, max_training_epoch, goal_loss, is_plot=False)
+        model, train_losses, valid_losses = train(model, train_loader, valid_loader, optimizer, loss_fn, early_stopping, max_training_epoch, goal_loss, is_plot=False)
     elif train_type == 'PKD':
-        model = KDtrain(model, train_loader, valid_loader, teacher_loader, optimizer, loss_fn, early_stopping,
+        model, train_losses, valid_losses = KDtrain(model, train_loader, valid_loader, teacher_loader, optimizer, loss_fn, early_stopping,
                         max_training_epoch, goal_loss, param_dict['initLamda'], param_dict['endLamda'], param_dict['decayStepsLamda'], is_plot=False)
     else:
         raise Exception("cannot recoginze the train type")
@@ -119,6 +120,12 @@ def loop_func(train_data_path, test_data_path, use_net, robot, train_type='BP', 
 
     save_model(model_save_path, save_file_name, model)
 
+    learning_curve_path = join(train_data_path,"result")
+    save_file_name = use_net + '_' + train_type +'_learnCurve.mat'
+    scipy.io.savemat(join(learning_curve_path, save_file_name), {'train_losses': train_losses,
+                                                                 'valid_losses': valid_losses})
+
+
 
 ################################################################################################################
 
@@ -131,8 +138,8 @@ train_data_path = join("data", "MTMR_28002", "real", "uniform", "N4", 'D6_SinCos
 valid_data_path = join("data", "MTMR_28002", "real", "uniform",  "N5", 'D6_SinCosInput', "dual")
 test_data_path = join("data", "MTMR_28002", "real", "random", 'N319','D6_SinCosInput')
 # loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002', train_type='BP', valid_data_path=valid_data_path)
-# loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002', train_type='PKD', valid_data_path= valid_data_path)
-loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002', train_type='PKD', valid_data_path= valid_data_path, is_inputNormalized=False, is_outputNormalized=True)
+loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002', train_type='PKD', valid_data_path= valid_data_path)
+# loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002', train_type='PKD', valid_data_path= valid_data_path, is_inputNormalized=False, is_outputNormalized=True)
 
 
 
