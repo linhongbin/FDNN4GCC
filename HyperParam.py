@@ -17,14 +17,14 @@ def get_hyper_param(robot, use_net=None, train_type=None, is_sim = False):
 
         if train_type == 'PKD':
             if not is_sim:
-                param_dict['learning_rate'] = 0.01
+                param_dict['learning_rate'] = 0.06
                 param_dict['teacher_sample_num'] = 30000
                 param_dict['initLamda'] = 2
                 param_dict['endLamda'] = 1.5
                 param_dict['decayStepsLamda'] = 30
             else:
-                param_dict['learning_rate'] = 0.01
-                param_dict['teacher_sample_num'] = 300
+                param_dict['learning_rate'] = 0.06
+                param_dict['teacher_sample_num'] = 30000
                 param_dict['initLamda'] =2
                 param_dict['endLamda'] = 1
                 param_dict['decayStepsLamda'] = 30

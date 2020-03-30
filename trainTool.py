@@ -37,13 +37,13 @@ def train(model, train_loader, valid_loader, optimizer, loss_fn, early_stopping,
     for t in range(max_training_epoch):
         train_losses = []
         valid_losses = []
+        optimizer.zero_grad()  # clear gradients for next train
         for feature, target in train_loader:
             target_hat = model(feature)
-            loss = loss_fn(target_hat, target)
-            optimizer.zero_grad()  # clear gradients for next train
-            loss.backward(retain_graph=True)  # backpropagation, compute gradients
-            optimizer.step()  # apply gradients
-            train_losses.append(loss.item())
+            loss = loss_fn(target_hat, target)/len(train_loader)
+            loss.backward()  # backpropagation, compute gradients
+            train_losses.append(loss.item()*len(train_loader))
+        optimizer.step()
         for feature, target in valid_loader:
             # forward pass: compute predicted outputs by passing inputs to the model
             target_hat = model(feature)
@@ -261,21 +261,20 @@ def KDtrain(model, train_loader, valid_loader, Teacher_trainLoader, optimizer, l
         train_losses = []
         valid_losses = []
         # calculate loss for
+        optimizer.zero_grad()  # clear gradients for next train
         for feature, target in train_loader:
             target_hat = model(feature)
-            loss = loss_fn(target_hat, target)
-            optimizer.zero_grad()  # clear gradients for next train
-            loss.backward(retain_graph=True)  # backpropagation, compute gradients
-            optimizer.step()  # apply gradients
-            train_losses.append(loss.item())
+            loss = loss_fn(target_hat, target) / len(train_loader)
+            loss.backward()  # backpropagation, compute gradients
+            train_losses.append(loss.item() * len(train_loader))
         for feature, target in Teacher_trainLoader:
             target_hat = model(feature)
             loss = loss_fn(target_hat, target)
-            loss = loss * lamda_arr[t]
-            optimizer.zero_grad()  # clear gradients for next train
-            loss.backward(retain_graph=True)  # backpropagation, compute gradients
-            optimizer.step()  # apply gradients
-            train_losses.append(loss.item())
+            loss = loss * lamda_arr[t] / len(Teacher_trainLoader)
+            loss.backward()  # backpropagation, compute gradients
+            train_losses.append(loss.item() * len(Teacher_trainLoader))
+
+        optimizer.step()  # apply gradients
 
         for feature, target in valid_loader:
             # forward pass: compute predicted outputs by passing inputs to the model
