@@ -10,8 +10,8 @@ from HyperParam import get_hyper_param
 from AnalyticalModel import *
 import scipy
 
-def loop_func(train_data_path, test_data_path, use_net, robot, train_type='BP', valid_data_path=None, is_sim = False, is_inputNormalized=True, is_outputNormalized=True):
-    param_dict = get_hyper_param(robot, train_type=train_type, is_sim=is_sim)
+def loop_func(train_data_path, test_data_path, use_net, robot, train_type='BP', valid_data_path=None, is_sim = False, is_inputNormalized=True, is_outputNormalized=True, sim_distScale=None):
+    param_dict = get_hyper_param(robot, train_type=train_type, is_sim=is_sim, sim_distScale = sim_distScale)
 
     max_training_epoch = param_dict['max_training_epoch'] # stop train when reach maximum training epoch
     goal_loss = param_dict['goal_loss'] # stop train when reach goal loss
@@ -131,36 +131,40 @@ def loop_func(train_data_path, test_data_path, use_net, robot, train_type='BP', 
 
 ####################
 # Real hardware part
-
-
-# train real MTM
-train_data_path = join("data", "MTMR_28002", "real", "uniform", "N4", 'D6_SinCosInput', "dual")
-valid_data_path = join("data", "MTMR_28002", "real", "uniform",  "N5", 'D6_SinCosInput', "dual")
-test_data_path = join("data", "MTMR_28002", "real", "random", 'N319','D6_SinCosInput')
-# loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002', train_type='BP', valid_data_path=valid_data_path)
-loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002', train_type='PKD', valid_data_path= valid_data_path)
-# loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002', train_type='PKD', valid_data_path= valid_data_path, is_inputNormalized=False, is_outputNormalized=True)
-
-
+#
+#
+# # train real MTM
+# train_data_path = join("data", "MTMR_28002", "real", "uniform", "N4", 'D6_SinCosInput', "dual")
+# valid_data_path = join("data", "MTMR_28002", "real", "uniform",  "N5", 'D6_SinCosInput', "dual")
+# test_data_path = join("data", "MTMR_28002", "real", "random", 'N319','D6_SinCosInput')
+# # loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002', train_type='BP', valid_data_path=valid_data_path)
+# loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002', train_type='PKD', valid_data_path= valid_data_path)
+# # loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002', train_type='PKD', valid_data_path= valid_data_path, is_inputNormalized=False, is_outputNormalized=True)
+#
+#
 
 
 # #############
-# # Simulation part
-# # train_simulate_num_list = [100,500,1000,5000, 10000, 30000]
-# train_simulate_num_list = [10, 50, 100,500,1000, 5000]
-# test_simulate_num = 20000
-# # DistScale = 0.02
-# DistScale = 1
-# save_dir = join("data", "MTMR_28002", "sim", "random", 'Dist_'+str(DistScale))
-# repetitive_num = 4
-#
-# test_data_path = join(save_dir, 'test', 'N20000', 'D6_SinCosInput')
-# valid_data_path = join(save_dir, 'test', 'N20000', 'D6_SinCosInput')
-# for train_simulate_num in train_simulate_num_list:
-#     for i in range(repetitive_num):
-#         train_data_path = join(save_dir, "train", 'N'+str(train_simulate_num), 'D6_SinCosInput', str(i+1))
-#         loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection', 'MTMR28002', train_type='BP',is_sim=True,valid_data_path=valid_data_path)
-#         loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection', 'MTMR28002', train_type='PKD', is_sim=True, valid_data_path=valid_data_path)
+# Simulation part
+# train_simulate_num_list = [100,500,1000,5000, 10000, 30000]
+train_simulate_num_list = [10, 50, 100,500,1000, 5000]
+test_simulate_num = 20000
+# DistScale = 0.02
+DistScale = 1
+save_dir = join("data", "MTMR_28002", "sim", "random", 'Dist_'+str(DistScale))
+repetitive_num = 4
+
+test_data_path = join(save_dir, 'test', 'N20000', 'D6_SinCosInput')
+valid_data_path = join(save_dir, 'test', 'N20000', 'D6_SinCosInput')
+for train_simulate_num in train_simulate_num_list:
+    for i in range(repetitive_num):
+        print("train_simulate_num ", train_simulate_num, " repetitive no: ", i)
+        train_data_path = join(save_dir, "train", 'N'+str(train_simulate_num), 'D6_SinCosInput', str(i+1))
+        print("train BP")
+        loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection', 'MTMR28002', train_type='BP',is_sim=True,valid_data_path=valid_data_path, sim_distScale = DistScale)
+        print("train PKD")
+        loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection', 'MTMR28002', train_type='PKD', is_sim=True, valid_data_path=valid_data_path, sim_distScale = DistScale)
+        # break
 
 
 

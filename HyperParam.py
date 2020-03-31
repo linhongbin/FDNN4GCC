@@ -1,5 +1,5 @@
 import torch
-def get_hyper_param(robot, use_net=None, train_type=None, is_sim = False):
+def get_hyper_param(robot, use_net=None, train_type=None, is_sim = False, sim_distScale=None):
     if robot == 'MTMR28002':
         param_dict = {}
         param_dict['max_training_epoch'] = 2000 # stop train when reach maximum training epoch
@@ -25,9 +25,15 @@ def get_hyper_param(robot, use_net=None, train_type=None, is_sim = False):
             else:
                 param_dict['learning_rate'] = 0.06
                 param_dict['teacher_sample_num'] = 30000
-                param_dict['initLamda'] =2
-                param_dict['endLamda'] = 1
                 param_dict['decayStepsLamda'] = 30
+                if sim_distScale == 1:
+                    param_dict['initLamda'] = 1E-10
+                    param_dict['endLamda'] = 1E-10
+                elif sim_distScale == 0.02:
+                    param_dict['initLamda'] = 2
+                    param_dict['endLamda'] = 1
+                else:
+                    raise Exception("not support")
 
 
 
