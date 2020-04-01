@@ -100,8 +100,8 @@ def cal_baselines_rms(train_data_path, test_data_path):
 
 train_simulate_num_list = [10, 50, 100,500,1000, 5000]
 repetitive_num = 4
-# DistScale = 0.02
-DistScale = 1
+DistScale = 0.02
+# DistScale = 1
 baseline_num = 3
 font_size = 20
 legend_size = 17

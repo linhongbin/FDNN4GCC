@@ -153,7 +153,7 @@ save_dir = join("data", "MTMR_28002", "sim", "random", 'N30000','D6_SinCosInput'
 
 DistScale = 1
 simulate_num = 1000
-repetitive_num = 4
+repetitive_num = 10
 
 # train_simulate_num_list = [100,500,1000,5000, 10000, 30000]
 train_simulate_num_list = [10, 50, 100,500,1000, 5000]
