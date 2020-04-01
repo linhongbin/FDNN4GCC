@@ -141,7 +141,6 @@ def generate_data(param_load_path, simulate_num, repetitive_num = 10, data_type=
 
 
 # params for experiments
-save_dir = join("data", "MTMR_28002", "sim", "random", 'N30000','D6_SinCosInput')
 DistScale_lst = [0.02, 1]  # disturbance scale, w.r.t. output of gravity
 train_repetitive_num = 10 # repetitive number for training data
 train_simulate_num_list = [10, 50, 100,500,1000, 5000] # data amount for training data
@@ -150,7 +149,7 @@ test_simulate_num = 20000 # data amount for testing data
 
 
 for DistScale in DistScale_lst:
-    save_dir = join("data", "MTMR_28002", "sim", "random", 'Dist_'+str(DistScale))
+    save_dir = join("data", "MTMR_28002", "sim", "random", 'NN_Dist_'+str(DistScale))
 
     # generate or update simulator param
     create_simulator_param(join("data", "MTMR_28002", "sim", "random"), DistScale=DistScale,sample_num=300)
