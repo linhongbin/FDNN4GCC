@@ -1,1 +1,0 @@
-net = feedforwardnet(10);
