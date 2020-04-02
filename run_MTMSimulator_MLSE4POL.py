@@ -9,57 +9,6 @@ from scipy import io
 from os import path
 
 
-# # a template function to initialize the linear layer with randomized parameters
-# def init_weights(m):
-#     if type(m) == torch.nn.Linear:
-#         torch.nn.init.xavier_uniform(m.weight)
-#         m.bias.data.fill_(0.01)
-#
-#
-# # create parameters for a simulator
-# def create_simulator_param(save_dir, DistScale=1, sample_num=300, jntPosSensingNoise=1e-5, jntTorSensingNoise=1e-5):
-#     D = 6
-#     device = 'cpu'
-#     model_DistPos = SigmoidNet(D, 100, D).to(device)
-#     model_DistPos.apply(init_weights)
-#     model_DistNeg = SigmoidNet(D, 100, D).to(device)
-#     model_DistNeg.apply(init_weights)
-#
-#     # sample the input space of the random function
-#     input_mat = np.zeros((sample_num, D))
-#     jnt_upper_limit = np.radians(np.array([40, 45, 34, 190, 175, 40]))
-#     jnt_lower_limit = np.radians(np.array([-40, -14, -34, -80, -85, -40]))
-#     for i in range(sample_num):
-#         rand_arr = np.random.rand(D)
-#         input_mat[i, :] = rand_arr * (jnt_upper_limit - jnt_lower_limit) + jnt_lower_limit
-#
-#     # get the params for scaling the random functions
-#     output_scaler_DistPos = preprocessing.StandardScaler().fit(model_DistPos(torch.from_numpy(input_mat).float()).detach().numpy())
-#     output_scaler_DistNeg = preprocessing.StandardScaler().fit(model_DistNeg(torch.from_numpy(input_mat).float()).detach().numpy())
-#
-#     gravity_model = MTM_CAD()
-#     output_mat_gravity = gravity_model.predict(input_mat)
-#
-#
-#     avg_output_vec = np.abs(np.mean(output_mat_gravity, axis=0))
-#     avg_output_vec[0] = avg_output_vec[3]
-#     print(avg_output_vec)
-#
-#     save_dict = {'model_DistPos': model_DistPos.state_dict()}
-#     save_dict['model_DistNeg'] = model_DistNeg.state_dict()
-#     save_dict['output_scaler_DistPos'] = output_scaler_DistPos
-#     save_dict['output_scaler_DistNeg'] = output_scaler_DistNeg
-#     save_dict['avg_output_vec'] = avg_output_vec
-#     save_dict['DistScale'] = DistScale
-#     save_dict['jntPosSensingNoise'] = jntPosSensingNoise
-#     save_dict['jntTorSensingNoise'] = jntTorSensingNoise
-#
-#
-#     save_dir = join(save_dir, 'Dist_'+str(DistScale))
-#     Path(save_dir).mkdir(parents=True, exist_ok=True)
-#     torch.save(save_dict, join(save_dir, 'simulator_param.pt'))
-
-
 
 # generate data for training, validating and testing
 def generate_data(save_path, simulate_num, repetitive_num = 10, data_type='train', jntPosSensingNoise=1e-5, jntTorSensingNoise=1e-5):
@@ -67,24 +16,7 @@ def generate_data(save_path, simulate_num, repetitive_num = 10, data_type='train
     if data_type not in data_type_list:
         raise Exception("data_type should be", data_type_list)
 
-    # # load params of the simulator
-    # file = join(param_load_path, 'simulator_param.pt')
-    # if not path.isfile(file):
-    #     raise Exception(file+ 'cannot not be found')
-    # checkpoint = torch.load(file)
 
-    # output_scaler_DistPos = checkpoint['output_scaler_DistPos']
-    # output_scaler_DistNeg = checkpoint['output_scaler_DistNeg']
-    # model_DistPos = SigmoidNet(D, 100, D).to(device)
-    # model_DistNeg = SigmoidNet(D, 100, D).to(device)
-    # model_DistPos.load_state_dict(checkpoint['model_DistPos'])
-    # model_DistNeg.load_state_dict(checkpoint['model_DistNeg'])
-    # avg_output_vec = checkpoint['avg_output_vec']
-    # DistScale = checkpoint['DistScale']
-    # jntPosSensingNoise = checkpoint['jntPosSensingNoise']
-    # jntTorSensingNoise = checkpoint['jntTorSensingNoise']
-
-    device = 'cpu'
     D = 6
 
     # repetitive experiments

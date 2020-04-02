@@ -36,7 +36,7 @@ def loop_func(train_data_path, test_data_path, use_net, robot, train_type='BP', 
             teacherModel = MTM_MLSE4POL()
         else:
             estimateBiasScale = 0.02
-            teacherModel = MTM_CAD()
+            teacherModel = MTM_MLSE4POL()
             # param_vec = teacherModel.param_vec
             # param_vec = param_vec + (np.random.rand(param_vec.shape[0], 1) - 0.5) * 2 * estimateBiasScale * np.abs(param_vec)
             # teacherModel.param_vec = param_vec
@@ -151,8 +151,9 @@ sum_start_time = time.clock()
 train_simulate_num_list = [10, 50, 100,500,1000, 5000]
 validate_simulate_num = 20000
 test_simulate_num = 20000
-DistScale_lst = [0.02, 1, None]
-repetitive_num = 10
+# DistScale_lst = [0.02, 1, None]
+DistScale_lst = [None]
+repetitive_num = 2
 
 for k in range(len(DistScale_lst)):
 
@@ -173,19 +174,41 @@ for k in range(len(DistScale_lst)):
             print("train_simulate_num ", train_simulate_num_list[j], " repetitive no: ", i)
             train_data_path = join(save_dir, "train", 'N'+str(train_simulate_num_list[j]), 'D6_SinCosInput', str(i+1))
             print("train BP")
-            loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection', 'MTMR28002', train_type='BP',is_sim=True,valid_data_path=valid_data_path, sim_distScale = DistScale)
-            print("train PKD")
-            loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection', 'MTMR28002', train_type='PKD', is_sim=True, valid_data_path=valid_data_path, sim_distScale = DistScale)
+            loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection', 'MTMR28002', train_type='BP',is_sim=True,valid_data_path=valid_data_path, sim_distScale = DistScale_lst[k])
 
             # print the time info
             loop_time = time.clock() - loop_time
             sum_time = time.clock() - sum_start_time
-            total_num = len(train_simulate_num_list)*repetitive_num
-            finish_num = (i + 1) + j*repetitive_num + k*repetitive_num*len(train_simulate_num_list)
+            total_num = len(train_simulate_num_list)*repetitive_num *len(DistScale_lst)
+            finish_num = (i + 1) + j*repetitive_num + k*repetitive_num*len(DistScale_lst)-0.5
             total_time = sum_time *  total_num / finish_num
-            print("finish (" + str(finish_num) + "/" + str(total_num) + ")"
-                  + " time:" + str(datetime.timedelta(seconds=sum_time))
-                  + " / " + str(datetime.timedelta(seconds=total_time)))
+            print("")
+            print("*******************************")
+            print("finish (" + str(finish_num) + "/" + str(total_num) + ")",
+                  "duration of one loop: " + str(datetime.timedelta(seconds=loop_time)),
+                  "  time:" + str(datetime.timedelta(seconds=sum_time)) + " / " + str(
+                      datetime.timedelta(seconds=total_time)))
+            print("*******************************")
+            print("")
+
+            print("train PKD")
+            loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection', 'MTMR28002', train_type='PKD', is_sim=True, valid_data_path=valid_data_path, sim_distScale = DistScale_lst[k])
+
+            # print the time info
+            loop_time = time.clock() - loop_time
+            sum_time = time.clock() - sum_start_time
+            total_num = len(train_simulate_num_list) * repetitive_num * len(DistScale_lst)
+            finish_num = (i + 1) + j * repetitive_num + k * repetitive_num * len(DistScale_lst)
+            total_time = sum_time * total_num / finish_num
+            print("")
+            print("*******************************")
+            print("finish (" + str(finish_num) + "/" + str(total_num) + ")",
+                  "duration of one loop: " + str(datetime.timedelta(seconds=loop_time)),
+                  "  time:" + str(datetime.timedelta(seconds=sum_time)) + " / " + str(
+                      datetime.timedelta(seconds=total_time)))
+            print("*******************************")
+            print("")
+
 
 
 

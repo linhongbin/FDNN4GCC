@@ -99,9 +99,8 @@ def cal_baselines_rms(train_data_path, test_data_path):
 # train_simulate_num_list = [10, 50, 100,500,1000, 5000]
 
 train_simulate_num_list = [10, 50, 100,500,1000, 5000]
-repetitive_num = 4
-DistScale = 0.02
-# DistScale = 1
+repetitive_num = 2
+sim_type = 'MLSE4POL'
 baseline_num = 3
 font_size = 20
 legend_size = 17
@@ -116,9 +115,9 @@ for i in range(len(train_simulate_num_list)):
     rel_rms_mean_mat = np.zeros((repetitive_num, baseline_num))
 
     for j in range(repetitive_num):
-        train_data_path = join("data", "MTMR_28002", "sim", 'random', 'Dist_'+str(DistScale), 'train', "N"+str(train_simulate_num_list[i]), 'D6_SinCosInput',
+        train_data_path = join("data", "MTMR_28002", "sim", 'random', sim_type, 'train', "N"+str(train_simulate_num_list[i]), 'D6_SinCosInput',
                                str(j+1))
-        test_data_path = join("data", "MTMR_28002", "sim", 'random', 'Dist_'+str(DistScale), 'test', "N20000", 'D6_SinCosInput')
+        test_data_path = join("data", "MTMR_28002", "sim", 'random', sim_type, 'test', "N20000", 'D6_SinCosInput')
         abs_rms_mean_list, rel_rms_mean_list = cal_baselines_rms(train_data_path, test_data_path)
         abs_rms_mean_mat[j,:] = np.asarray(abs_rms_mean_list)
         rel_rms_mean_mat[j, :] = np.asarray(rel_rms_mean_list)
@@ -133,39 +132,39 @@ for i in range(len(train_simulate_num_list)):
     abs_rms_std_arr_list.append(abs_rms_std_arr)
     rel_rms_std_arr_list.append(rel_rms_std_arr)
 
-
-fig,ax = plt.subplots()
+#
+# fig,ax = plt.subplots()
 
 legend_list = ['Physical Teacher Model', 'DFNN with LfS', 'DFNN with PKD']
 fill_color_list = ['tab:blue','tab:orange', 'tab:green']
-for i in range(baseline_num):
-    x = train_simulate_num_list
-    y = [abs_rms_mean_arr[i] for abs_rms_mean_arr in abs_rms_mean_arr_list]
-    y_err = [abs_rms_std_arr[i] for abs_rms_std_arr in abs_rms_std_arr_list]
-
-    x_arr = np.asarray(x)
-    y_arr = np.asarray(y)
-    y_err_arr = np.asarray(y_err)
-    plt.plot(x_arr, y_arr, '-', color= fill_color_list[i])
-    plt.fill_between(x_arr, y_arr-y_err_arr, y_arr+y_err_arr, alpha=0.5, facecolor=fill_color_list[i], label=legend_list[i])
-
-plt.legend(loc='upper right',fontsize=legend_size)
-plt.xlabel(r'$T^{s}$', fontsize=font_size)
-plt.ylabel(r'$\epsilon_{rms}$', fontsize=font_size)
-plt.xscale('log')
-ax.tick_params(axis='both', which='major', labelsize=font_size)
-ax.tick_params(axis='both', which='minor', labelsize=font_size)
-
-plt.yticks(fontsize=font_size)
-plt.tight_layout()
-ax.yaxis.grid(True)
-# ax.autoscale(tight=True)
-
-plt.show()
-save_dir = join("data", "MTMR_28002", "sim", 'random', 'Dist_'+str(DistScale), 'train', "result")
-Path(save_dir).mkdir(parents=True, exist_ok=True)
-fig.savefig(join(save_dir,'Dist_'+str(DistScale)+'_OfflineTest_AbsRMS.pdf'),bbox_inches='tight')
-
+# for i in range(baseline_num):
+#     x = train_simulate_num_list
+#     y = [abs_rms_mean_arr[i] for abs_rms_mean_arr in abs_rms_mean_arr_list]
+#     y_err = [abs_rms_std_arr[i] for abs_rms_std_arr in abs_rms_std_arr_list]
+#
+#     x_arr = np.asarray(x)
+#     y_arr = np.asarray(y)
+#     y_err_arr = np.asarray(y_err)
+#     plt.plot(x_arr, y_arr, '-', color= fill_color_list[i])
+#     plt.fill_between(x_arr, y_arr-y_err_arr, y_arr+y_err_arr, alpha=0.5, facecolor=fill_color_list[i], label=legend_list[i])
+#
+# plt.legend(loc='upper right',fontsize=legend_size)
+# plt.xlabel(r'$T^{s}$', fontsize=font_size)
+# plt.ylabel(r'$\epsilon_{rms}$', fontsize=font_size)
+# plt.xscale('log')
+# ax.tick_params(axis='both', which='major', labelsize=font_size)
+# ax.tick_params(axis='both', which='minor', labelsize=font_size)
+#
+# plt.yticks(fontsize=font_size)
+# plt.tight_layout()
+# ax.yaxis.grid(True)
+# # ax.autoscale(tight=True)
+#
+# plt.show()
+# save_dir = join("data", "MTMR_28002", "sim", 'random', sim_type, 'train', "result")
+# Path(save_dir).mkdir(parents=True, exist_ok=True)
+# # fig.savefig(join(save_dir,'Dist_'+str(DistScale)+'_OfflineTest_AbsRMS.pdf'),bbox_inches='tight')
+#
 
 
 
@@ -195,9 +194,10 @@ plt.tight_layout()
 
 
 plt.show()
-save_dir = join("data", "MTMR_28002", "sim", 'random', 'Dist_'+str(DistScale), 'train', "result")
+save_dir = join("data", "MTMR_28002", "sim", 'random', sim_type, 'train', "result")
+save_dir = join("data", "MTMR_28002", "sim", 'random', 'MLSE4POL', 'train', "result")
 Path(save_dir).mkdir(parents=True, exist_ok=True)
-fig.savefig(join(save_dir,'Dist_'+str(DistScale)+'_OfflineTest_RelRMS.pdf'),bbox_inches='tight')
+# fig.savefig(join(save_dir,'Dist_'+str(DistScale)+'_OfflineTest_RelRMS.pdf'),bbox_inches='tight')
 
 
 #print(err_output_mat)
