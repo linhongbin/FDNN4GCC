@@ -81,7 +81,7 @@ test_simulate_num = 20000 # data amount for testing data
 jntPosSensingNoise=1e-5 # noise for measuring positional signals
 jntTorSensingNoise=1e-5 # noise for measuring torque signals
 experiment_sets_num = 2
-param_noise_scale_lst = [1e-3, 1e-1]
+param_noise_scale_lst = [1e-3, 4e-3]
 
 for k in range(experiment_sets_num):
     save_dir = join(root_dir, str(k+1))

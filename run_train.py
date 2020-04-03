@@ -153,7 +153,7 @@ test_simulate_num = 20000
 
 repetitive_num = 4
 param_noise_scale_lst = [1e-3, 1e-1]
-for k in range(len(param_noise_scale_lst)):
+for k in range(1,len(param_noise_scale_lst)):
 
     save_dir = join("data", "MTMR_28002", "sim", "random", 'MLSE4POL',str(k+1))
 
