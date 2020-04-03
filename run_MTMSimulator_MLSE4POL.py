@@ -9,57 +9,6 @@ from scipy import io
 from os import path
 
 
-# # a template function to initialize the linear layer with randomized parameters
-# def init_weights(m):
-#     if type(m) == torch.nn.Linear:
-#         torch.nn.init.xavier_uniform(m.weight)
-#         m.bias.data.fill_(0.01)
-#
-#
-# # create parameters for a simulator
-# def create_simulator_param(save_dir, DistScale=1, sample_num=300, jntPosSensingNoise=1e-5, jntTorSensingNoise=1e-5):
-#     D = 6
-#     device = 'cpu'
-#     model_DistPos = SigmoidNet(D, 100, D).to(device)
-#     model_DistPos.apply(init_weights)
-#     model_DistNeg = SigmoidNet(D, 100, D).to(device)
-#     model_DistNeg.apply(init_weights)
-#
-#     # sample the input space of the random function
-#     input_mat = np.zeros((sample_num, D))
-#     jnt_upper_limit = np.radians(np.array([40, 45, 34, 190, 175, 40]))
-#     jnt_lower_limit = np.radians(np.array([-40, -14, -34, -80, -85, -40]))
-#     for i in range(sample_num):
-#         rand_arr = np.random.rand(D)
-#         input_mat[i, :] = rand_arr * (jnt_upper_limit - jnt_lower_limit) + jnt_lower_limit
-#
-#     # get the params for scaling the random functions
-#     output_scaler_DistPos = preprocessing.StandardScaler().fit(model_DistPos(torch.from_numpy(input_mat).float()).detach().numpy())
-#     output_scaler_DistNeg = preprocessing.StandardScaler().fit(model_DistNeg(torch.from_numpy(input_mat).float()).detach().numpy())
-#
-#     gravity_model = MTM_CAD()
-#     output_mat_gravity = gravity_model.predict(input_mat)
-#
-#
-#     avg_output_vec = np.abs(np.mean(output_mat_gravity, axis=0))
-#     avg_output_vec[0] = avg_output_vec[3]
-#     print(avg_output_vec)
-#
-#     save_dict = {'model_DistPos': model_DistPos.state_dict()}
-#     save_dict['model_DistNeg'] = model_DistNeg.state_dict()
-#     save_dict['output_scaler_DistPos'] = output_scaler_DistPos
-#     save_dict['output_scaler_DistNeg'] = output_scaler_DistNeg
-#     save_dict['avg_output_vec'] = avg_output_vec
-#     save_dict['DistScale'] = DistScale
-#     save_dict['jntPosSensingNoise'] = jntPosSensingNoise
-#     save_dict['jntTorSensingNoise'] = jntTorSensingNoise
-#
-#
-#     save_dir = join(save_dir, 'Dist_'+str(DistScale))
-#     Path(save_dir).mkdir(parents=True, exist_ok=True)
-#     torch.save(save_dict, join(save_dir, 'simulator_param.pt'))
-
-
 
 # generate data for training, validating and testing
 def generate_data(save_path, simulate_num, repetitive_num = 10, data_type='train', jntPosSensingNoise=1e-5, jntTorSensingNoise=1e-5):
@@ -67,24 +16,7 @@ def generate_data(save_path, simulate_num, repetitive_num = 10, data_type='train
     if data_type not in data_type_list:
         raise Exception("data_type should be", data_type_list)
 
-    # # load params of the simulator
-    # file = join(param_load_path, 'simulator_param.pt')
-    # if not path.isfile(file):
-    #     raise Exception(file+ 'cannot not be found')
-    # checkpoint = torch.load(file)
 
-    # output_scaler_DistPos = checkpoint['output_scaler_DistPos']
-    # output_scaler_DistNeg = checkpoint['output_scaler_DistNeg']
-    # model_DistPos = SigmoidNet(D, 100, D).to(device)
-    # model_DistNeg = SigmoidNet(D, 100, D).to(device)
-    # model_DistPos.load_state_dict(checkpoint['model_DistPos'])
-    # model_DistNeg.load_state_dict(checkpoint['model_DistNeg'])
-    # avg_output_vec = checkpoint['avg_output_vec']
-    # DistScale = checkpoint['DistScale']
-    # jntPosSensingNoise = checkpoint['jntPosSensingNoise']
-    # jntTorSensingNoise = checkpoint['jntTorSensingNoise']
-
-    device = 'cpu'
     D = 6
 
     # repetitive experiments
@@ -129,25 +61,42 @@ def generate_data(save_path, simulate_num, repetitive_num = 10, data_type='train
                    {'input_mat': input_mat, 'output_mat': output_mat})
         print("finish "+data_type+" data ",k+1," : (",k+1,"/",repetitive_num,")")
 
+# create teacher model parameters
+def create_TM_param(root_path, param_noise_scale):
+    model = MTM_MLSE4POL()
+    param_vec = model.param_vec
+    param_vec[10:,:] = param_vec[10:,:] + 2 * (np.random.rand(60,1)-0.5) * param_noise_scale
+    save_dict = {'TM_param_noise_scale': param_noise_scale}
+    save_dict['TM_param_vec'] = param_vec
+    Path(root_path).mkdir(parents=True, exist_ok=True)
+    io.savemat(join(root_path, 'simulation_param.mat'), save_dict)
+
 
 # params for experiments
-save_dir = join("data", "MTMR_28002", "sim", "random", 'MLSE4POL')
+root_dir = join("data", "MTMR_28002", "sim", "random", 'MLSE4POL')
 train_repetitive_num = 10 # repetitive number for training data
 train_simulate_num_list = [10, 50, 100,500,1000, 5000] # data amount for training data
 validate_simulate_num = 20000 # data amount for validate data
 test_simulate_num = 20000 # data amount for testing data
 jntPosSensingNoise=1e-5 # noise for measuring positional signals
 jntTorSensingNoise=1e-5 # noise for measuring torque signals
+experiment_sets_num = 2
+param_noise_scale_lst = [1e-3, 4e-3]
+
+for k in range(experiment_sets_num):
+    save_dir = join(root_dir, str(k+1))
+
+    # save simulation param
+    create_TM_param(save_dir, param_noise_scale=param_noise_scale_lst[k])
+
+    # generate training data
+    for train_simulate_num in train_simulate_num_list:
+        generate_data(save_dir, train_simulate_num, repetitive_num = train_repetitive_num, data_type='train', jntPosSensingNoise=jntPosSensingNoise, jntTorSensingNoise = jntTorSensingNoise)
+
+    # generate validating data
+    generate_data(save_dir, validate_simulate_num, repetitive_num=1, data_type='validate', jntPosSensingNoise=jntPosSensingNoise, jntTorSensingNoise = jntTorSensingNoise)
+
+    # generate testing data
+    generate_data(save_dir, test_simulate_num, repetitive_num=1, data_type='test', jntPosSensingNoise=jntPosSensingNoise, jntTorSensingNoise = jntTorSensingNoise)
 
 
-
-
-# generate training data
-for train_simulate_num in train_simulate_num_list:
-    generate_data(save_dir, train_simulate_num, repetitive_num = train_repetitive_num, data_type='train', jntPosSensingNoise=jntPosSensingNoise, jntTorSensingNoise = jntTorSensingNoise)
-
-# generate validating data
-generate_data(save_dir, validate_simulate_num, repetitive_num=1, data_type='validate', jntPosSensingNoise=jntPosSensingNoise, jntTorSensingNoise = jntTorSensingNoise)
-
-# generate testing data
-generate_data(save_dir, test_simulate_num, repetitive_num=1, data_type='test', jntPosSensingNoise=jntPosSensingNoise, jntTorSensingNoise = jntTorSensingNoise)

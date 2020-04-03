@@ -55,7 +55,7 @@ def create_simulator_param(save_dir, DistScale=1, sample_num=300, jntPosSensingN
     save_dict['jntTorSensingNoise'] = jntTorSensingNoise
 
 
-    save_dir = join(save_dir, 'Dist_'+str(DistScale))
+    save_dir = join(save_dir)
     Path(save_dir).mkdir(parents=True, exist_ok=True)
     torch.save(save_dict, join(save_dir, 'simulator_param.pt'))
 
@@ -152,7 +152,7 @@ for DistScale in DistScale_lst:
     save_dir = join("data", "MTMR_28002", "sim", "random", 'NN_Dist_'+str(DistScale))
 
     # generate or update simulator param
-    create_simulator_param(join("data", "MTMR_28002", "sim", "random"), DistScale=DistScale,sample_num=300)
+    create_simulator_param(save_dir, DistScale=DistScale,sample_num=300)
 
     # generate training data
     for train_simulate_num in train_simulate_num_list:

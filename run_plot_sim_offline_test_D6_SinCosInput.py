@@ -25,7 +25,7 @@ from pathlib import Path
 # load Trajectory Test experiment data
 
 
-def cal_baselines_rms(train_data_path, test_data_path):
+def cal_baselines_rms(train_data_path, test_data_path, TM_param_vec):
     test_dataset = load_data_dir(join(test_data_path, "data"), device='cpu',input_scaler=None, output_scaler=None,
                                  is_inputScale = False, is_outputScale = False)
 
@@ -36,10 +36,11 @@ def cal_baselines_rms(train_data_path, test_data_path):
     test_output_hat_mat_List = []
     legend_list = []
 
+    teacherModel = MTM_MLSE4POL()
+    teacherModel.param_vec = TM_param_vec
 
-    # get predict MLSE4POL Model output
-    analytical_model = MTM_CAD()
-    test_output_hat_mat_List.append(analytical_model.predict(test_input_mat))
+
+    test_output_hat_mat_List.append(teacherModel.predict(test_input_mat))
     legend_list.append('CAD')
 
 
@@ -130,6 +131,8 @@ for k in range(len(type_lst)):
         abs_rms_std_arr_list.append(abs_rms_std_arr)
         rel_rms_std_arr_list.append(rel_rms_std_arr)
 
+#
+# fig,ax = plt.subplots()
 
     # fig,ax = plt.subplots()
     #
