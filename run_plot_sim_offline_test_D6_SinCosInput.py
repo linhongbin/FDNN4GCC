@@ -25,7 +25,7 @@ from pathlib import Path
 # load Trajectory Test experiment data
 
 
-def cal_baselines_rms(train_data_path, test_data_path):
+def cal_baselines_rms(train_data_path, test_data_path, TM_param_vec):
     test_dataset = load_data_dir(join(test_data_path, "data"), device='cpu',input_scaler=None, output_scaler=None,
                                  is_inputScale = False, is_outputScale = False)
 
@@ -36,10 +36,11 @@ def cal_baselines_rms(train_data_path, test_data_path):
     test_output_hat_mat_List = []
     legend_list = []
 
+    teacherModel = MTM_MLSE4POL()
+    teacherModel.param_vec = TM_param_vec
 
-    # get predict MLSE4POL Model output
-    analytical_model = MTM_CAD()
-    test_output_hat_mat_List.append(analytical_model.predict(test_input_mat))
+
+    test_output_hat_mat_List.append(teacherModel.predict(test_input_mat))
     legend_list.append('CAD')
 
 
@@ -104,21 +105,23 @@ sim_type = 'MLSE4POL'
 baseline_num = 3
 font_size = 20
 legend_size = 17
-
 abs_rms_mean_arr_list = []
 rel_rms_mean_arr_list = []
 abs_rms_std_arr_list = []
 rel_rms_std_arr_list = []
 
+root_path =  join("data", "MTMR_28002", "sim", 'random', sim_type, '2')
+load_dict = sio.loadmat(join(root_path, 'simulation_param.mat'))
+TM_param_vec = load_dict['TM_param_vec']
 for i in range(len(train_simulate_num_list)):
     abs_rms_mean_mat = np.zeros((repetitive_num, baseline_num))
     rel_rms_mean_mat = np.zeros((repetitive_num, baseline_num))
 
     for j in range(repetitive_num):
-        train_data_path = join("data", "MTMR_28002", "sim", 'random', sim_type, 'train', "N"+str(train_simulate_num_list[i]), 'D6_SinCosInput',
+        train_data_path = join(root_path, 'train', "N"+str(train_simulate_num_list[i]), 'D6_SinCosInput',
                                str(j+1))
-        test_data_path = join("data", "MTMR_28002", "sim", 'random', sim_type, 'test', "N20000", 'D6_SinCosInput')
-        abs_rms_mean_list, rel_rms_mean_list = cal_baselines_rms(train_data_path, test_data_path)
+        test_data_path = join(root_path,'test', "N20000", 'D6_SinCosInput')
+        abs_rms_mean_list, rel_rms_mean_list = cal_baselines_rms(train_data_path, test_data_path, TM_param_vec = TM_param_vec)
         abs_rms_mean_mat[j,:] = np.asarray(abs_rms_mean_list)
         rel_rms_mean_mat[j, :] = np.asarray(rel_rms_mean_list)
 
@@ -194,9 +197,9 @@ plt.tight_layout()
 
 
 plt.show()
-save_dir = join("data", "MTMR_28002", "sim", 'random', sim_type, 'train', "result")
-save_dir = join("data", "MTMR_28002", "sim", 'random', 'MLSE4POL', 'train', "result")
-Path(save_dir).mkdir(parents=True, exist_ok=True)
+# save_dir = join("data", "MTMR_28002", "sim", 'random', sim_type, 'train', "result")
+# # save_dir = join("data", "MTMR_28002", "sim", 'random', 'MLSE4POL', 'train', "result")
+# Path(save_dir).mkdir(parents=True, exist_ok=True)
 # fig.savefig(join(save_dir,'Dist_'+str(DistScale)+'_OfflineTest_RelRMS.pdf'),bbox_inches='tight')
 
 

@@ -61,25 +61,42 @@ def generate_data(save_path, simulate_num, repetitive_num = 10, data_type='train
                    {'input_mat': input_mat, 'output_mat': output_mat})
         print("finish "+data_type+" data ",k+1," : (",k+1,"/",repetitive_num,")")
 
+# create teacher model parameters
+def create_TM_param(root_path, param_noise_scale):
+    model = MTM_MLSE4POL()
+    param_vec = model.param_vec
+    param_vec[10:,:] = param_vec[10:,:] + 2 * (np.random.rand(60,1)-0.5) * param_noise_scale
+    save_dict = {'TM_param_noise_scale': param_noise_scale}
+    save_dict['TM_param_vec'] = param_vec
+    Path(root_path).mkdir(parents=True, exist_ok=True)
+    io.savemat(join(root_path, 'simulation_param.mat'), save_dict)
+
 
 # params for experiments
-save_dir = join("data", "MTMR_28002", "sim", "random", 'MLSE4POL')
+root_dir = join("data", "MTMR_28002", "sim", "random", 'MLSE4POL')
 train_repetitive_num = 10 # repetitive number for training data
 train_simulate_num_list = [10, 50, 100,500,1000, 5000] # data amount for training data
 validate_simulate_num = 20000 # data amount for validate data
 test_simulate_num = 20000 # data amount for testing data
 jntPosSensingNoise=1e-5 # noise for measuring positional signals
 jntTorSensingNoise=1e-5 # noise for measuring torque signals
+experiment_sets_num = 2
+param_noise_scale_lst = [1e-3, 1e-1]
+
+for k in range(experiment_sets_num):
+    save_dir = join(root_dir, str(k+1))
+
+    # save simulation param
+    create_TM_param(save_dir, param_noise_scale=param_noise_scale_lst[k])
+
+    # generate training data
+    for train_simulate_num in train_simulate_num_list:
+        generate_data(save_dir, train_simulate_num, repetitive_num = train_repetitive_num, data_type='train', jntPosSensingNoise=jntPosSensingNoise, jntTorSensingNoise = jntTorSensingNoise)
+
+    # generate validating data
+    generate_data(save_dir, validate_simulate_num, repetitive_num=1, data_type='validate', jntPosSensingNoise=jntPosSensingNoise, jntTorSensingNoise = jntTorSensingNoise)
+
+    # generate testing data
+    generate_data(save_dir, test_simulate_num, repetitive_num=1, data_type='test', jntPosSensingNoise=jntPosSensingNoise, jntTorSensingNoise = jntTorSensingNoise)
 
 
-
-
-# generate training data
-for train_simulate_num in train_simulate_num_list:
-    generate_data(save_dir, train_simulate_num, repetitive_num = train_repetitive_num, data_type='train', jntPosSensingNoise=jntPosSensingNoise, jntTorSensingNoise = jntTorSensingNoise)
-
-# generate validating data
-generate_data(save_dir, validate_simulate_num, repetitive_num=1, data_type='validate', jntPosSensingNoise=jntPosSensingNoise, jntTorSensingNoise = jntTorSensingNoise)
-
-# generate testing data
-generate_data(save_dir, test_simulate_num, repetitive_num=1, data_type='test', jntPosSensingNoise=jntPosSensingNoise, jntTorSensingNoise = jntTorSensingNoise)
