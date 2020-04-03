@@ -95,175 +95,126 @@ def cal_baselines_rms(train_data_path, test_data_path):
 
 
 
-
-# train_simulate_num_list = [10, 50, 100,500,1000, 5000]
-
 train_simulate_num_list = [10, 50, 100,500,1000, 5000]
-repetitive_num = 4
-DistScale = 0.02
-# DistScale = 1
+repetitive_num = 2
+type_lst = ['NN_Dist_0.02', 'NN_Dist_1']
 baseline_num = 3
 font_size = 20
 legend_size = 17
 
-abs_rms_mean_arr_list = []
-rel_rms_mean_arr_list = []
-abs_rms_std_arr_list = []
-rel_rms_std_arr_list = []
 
-for i in range(len(train_simulate_num_list)):
-    abs_rms_mean_mat = np.zeros((repetitive_num, baseline_num))
-    rel_rms_mean_mat = np.zeros((repetitive_num, baseline_num))
+for k in range(len(type_lst)):
+    abs_rms_mean_arr_list = []
+    rel_rms_mean_arr_list = []
+    abs_rms_std_arr_list = []
+    rel_rms_std_arr_list = []
 
-    for j in range(repetitive_num):
-        train_data_path = join("data", "MTMR_28002", "sim", 'random', 'Dist_'+str(DistScale), 'train', "N"+str(train_simulate_num_list[i]), 'D6_SinCosInput',
-                               str(j+1))
-        test_data_path = join("data", "MTMR_28002", "sim", 'random', 'Dist_'+str(DistScale), 'test', "N20000", 'D6_SinCosInput')
-        abs_rms_mean_list, rel_rms_mean_list = cal_baselines_rms(train_data_path, test_data_path)
-        abs_rms_mean_mat[j,:] = np.asarray(abs_rms_mean_list)
-        rel_rms_mean_mat[j, :] = np.asarray(rel_rms_mean_list)
+    for i in range(len(train_simulate_num_list)):
+        abs_rms_mean_mat = np.zeros((repetitive_num, baseline_num))
+        rel_rms_mean_mat = np.zeros((repetitive_num, baseline_num))
+        root_path = join("data", "MTMR_28002", "sim", 'random', type_lst[k])
+        for j in range(repetitive_num):
+            train_data_path = join(root_path, 'train', "N"+str(train_simulate_num_list[i]), 'D6_SinCosInput',str(j+1))
+            test_data_path = join(root_path, 'test', "N20000", 'D6_SinCosInput')
+            abs_rms_mean_list, rel_rms_mean_list = cal_baselines_rms(train_data_path, test_data_path)
+            abs_rms_mean_mat[j,:] = np.asarray(abs_rms_mean_list)
+            rel_rms_mean_mat[j, :] = np.asarray(rel_rms_mean_list)
 
-    abs_rms_mean_arr = np.mean(abs_rms_mean_mat, axis=0)
-    rel_rms_mean_arr = np.mean(rel_rms_mean_mat, axis=0)
-    abs_rms_std_arr = np.std(abs_rms_mean_mat, axis=0)
-    rel_rms_std_arr = np.std(rel_rms_mean_mat, axis=0)
+        abs_rms_mean_arr = np.mean(abs_rms_mean_mat, axis=0)
+        rel_rms_mean_arr = np.mean(rel_rms_mean_mat, axis=0)
+        abs_rms_std_arr = np.std(abs_rms_mean_mat, axis=0)
+        rel_rms_std_arr = np.std(rel_rms_mean_mat, axis=0)
 
-    abs_rms_mean_arr_list.append(abs_rms_mean_arr)
-    rel_rms_mean_arr_list.append(rel_rms_mean_arr)
-    abs_rms_std_arr_list.append(abs_rms_std_arr)
-    rel_rms_std_arr_list.append(rel_rms_std_arr)
-
-
-fig,ax = plt.subplots()
-
-legend_list = ['Physical Teacher Model', 'DFNN with LfS', 'DFNN with PKD']
-fill_color_list = ['tab:blue','tab:orange', 'tab:green']
-for i in range(baseline_num):
-    x = train_simulate_num_list
-    y = [abs_rms_mean_arr[i] for abs_rms_mean_arr in abs_rms_mean_arr_list]
-    y_err = [abs_rms_std_arr[i] for abs_rms_std_arr in abs_rms_std_arr_list]
-
-    x_arr = np.asarray(x)
-    y_arr = np.asarray(y)
-    y_err_arr = np.asarray(y_err)
-    plt.plot(x_arr, y_arr, '-', color= fill_color_list[i])
-    plt.fill_between(x_arr, y_arr-y_err_arr, y_arr+y_err_arr, alpha=0.5, facecolor=fill_color_list[i], label=legend_list[i])
-
-plt.legend(loc='upper right',fontsize=legend_size)
-plt.xlabel(r'$T^{s}$', fontsize=font_size)
-plt.ylabel(r'$\epsilon_{rms}$', fontsize=font_size)
-plt.xscale('log')
-ax.tick_params(axis='both', which='major', labelsize=font_size)
-ax.tick_params(axis='both', which='minor', labelsize=font_size)
-
-plt.yticks(fontsize=font_size)
-plt.tight_layout()
-ax.yaxis.grid(True)
-# ax.autoscale(tight=True)
-
-plt.show()
-save_dir = join("data", "MTMR_28002", "sim", 'random', 'Dist_'+str(DistScale), 'train', "result")
-Path(save_dir).mkdir(parents=True, exist_ok=True)
-fig.savefig(join(save_dir,'Dist_'+str(DistScale)+'_OfflineTest_AbsRMS.pdf'),bbox_inches='tight')
+        abs_rms_mean_arr_list.append(abs_rms_mean_arr)
+        rel_rms_mean_arr_list.append(rel_rms_mean_arr)
+        abs_rms_std_arr_list.append(abs_rms_std_arr)
+        rel_rms_std_arr_list.append(rel_rms_std_arr)
 
 
+    # fig,ax = plt.subplots()
+    #
+    # legend_list = ['Physical Teacher Model', 'DFNN with LfS', 'DFNN with PKD']
+    # fill_color_list = ['tab:blue','tab:orange', 'tab:green']
+    # for i in range(baseline_num):
+    #     x = train_simulate_num_list
+    #     y = [abs_rms_mean_arr[i] for abs_rms_mean_arr in abs_rms_mean_arr_list]
+    #     y_err = [abs_rms_std_arr[i] for abs_rms_std_arr in abs_rms_std_arr_list]
+    #
+    #     x_arr = np.asarray(x)
+    #     y_arr = np.asarray(y)
+    #     y_err_arr = np.asarray(y_err)
+    #     plt.plot(x_arr, y_arr, '-', color= fill_color_list[i])
+    #     plt.fill_between(x_arr, y_arr-y_err_arr, y_arr+y_err_arr, alpha=0.5, facecolor=fill_color_list[i], label=legend_list[i])
+    #
+    # plt.legend(loc='upper right',fontsize=legend_size)
+    # plt.xlabel(r'$T^{s}$', fontsize=font_size)
+    # plt.ylabel(r'$\epsilon_{rms}$', fontsize=font_size)
+    # plt.xscale('log')
+    # ax.tick_params(axis='both', which='major', labelsize=font_size)
+    # ax.tick_params(axis='both', which='minor', labelsize=font_size)
+    #
+    # plt.yticks(fontsize=font_size)
+    # plt.tight_layout()
+    # ax.yaxis.grid(True)
+    # # ax.autoscale(tight=True)
+    #
+    # plt.show()
+    # save_dir = join("data", "MTMR_28002", "sim", 'random', 'Dist_'+str(DistScale), 'train', "result")
+    # Path(save_dir).mkdir(parents=True, exist_ok=True)
+    # fig.savefig(join(save_dir,'Dist_'+str(DistScale)+'_OfflineTest_AbsRMS.pdf'),bbox_inches='tight')
+    #
+
+    legend_list = ['Biased Model in [39]', 'FDNN with LfS', 'FDNN with PKD']
+    fill_color_list = ['tab:green', 'tab:orange', 'tab:blue']
+    paperFontSize = 20
+
+    fig,ax = plt.subplots(figsize=(8, 4))
+
+    plt.rcParams["font.family"] = "Times New Roman"
+    matplotlib.rcParams.update({'font.size': paperFontSize})
+    for i in range(baseline_num):
+        x = train_simulate_num_list
+        y = [rel_rms_mean_arr[i] for rel_rms_mean_arr in rel_rms_mean_arr_list]
+        y_err = [rel_rms_std_arr[i] for rel_rms_std_arr in rel_rms_std_arr_list]
+
+        x_arr = np.asarray(x)
+        y_arr = np.asarray(y)
+        y_err_arr = np.asarray(y_err)
+        plt.plot(x_arr, y_arr, '-', color= fill_color_list[i])
+        plt.fill_between(x_arr, y_arr-y_err_arr, y_arr+y_err_arr, alpha=0.5, facecolor=fill_color_list[i], label=legend_list[i])
+
+    font = matplotlib.font_manager.FontProperties(family='Times New Roman', size=paperFontSize)
+    # ax.legend(loc='upper center', prop=font, bbox_to_anchor=(0.5, 1),
+    #           fancybox=True, shadow=True, ncol=2)
+    plt.legend(bbox_to_anchor=(0., 1.06, 1., .102), loc='lower left',
+               ncol=2, mode="expand", borderaxespad=0.,fancybox=True, shadow=True)
 
 
-fig,ax = plt.subplots()
+    # Save the figure and show
+    csfont = {'fontname': 'Times New Roman', 'fontsize': paperFontSize}
+    # plt.xlabel(r'$T^{s}$', fontsize=font_size)
+    # plt.ylabel(r'$\epsilon_{rms}\%$', fontsize=font_size)
+    ax.set_xlabel(r'$T^{s}$', **csfont)
+    ax.set_ylabel(r'$\epsilon_{rms}\%$', **csfont)
 
-for i in range(baseline_num):
-    x = train_simulate_num_list
-    y = [rel_rms_mean_arr[i] for rel_rms_mean_arr in rel_rms_mean_arr_list]
-    y_err = [rel_rms_std_arr[i] for rel_rms_std_arr in rel_rms_std_arr_list]
+    a = plt.gca()
+    a.set_xticklabels(a.get_xticks(), **csfont)
+    a.set_yticklabels(a.get_yticks(), **csfont)
 
-    x_arr = np.asarray(x)
-    y_arr = np.asarray(y)
-    y_err_arr = np.asarray(y_err)
-    plt.plot(x_arr, y_arr, '-', color= fill_color_list[i])
-    plt.fill_between(x_arr, y_arr-y_err_arr, y_arr+y_err_arr, alpha=0.5, facecolor=fill_color_list[i], label=legend_list[i])
-
-plt.legend(loc='upper right',fontsize=legend_size)
-
-plt.xlabel(r'$T^{s}$', fontsize=font_size)
-plt.ylabel(r'$\epsilon_{rms}\%$', fontsize=font_size)
-plt.xscale('log')
-ax.tick_params(axis='both', which='major', labelsize=font_size)
-ax.tick_params(axis='both', which='minor', labelsize=font_size)
-
-plt.yticks(fontsize=font_size)
-plt.tight_layout()
+    plt.xscale('log')
+    # ax.tick_params(axis='both', which='major', labelsize=font_size)
+    # ax.tick_params(axis='both', which='minor', labelsize=font_size)
+    ax.margins(y=.1, x=.03)
 
 
-plt.show()
-save_dir = join("data", "MTMR_28002", "sim", 'random', 'Dist_'+str(DistScale), 'train', "result")
-Path(save_dir).mkdir(parents=True, exist_ok=True)
-fig.savefig(join(save_dir,'Dist_'+str(DistScale)+'_OfflineTest_RelRMS.pdf'),bbox_inches='tight')
+    plt.tight_layout()
 
 
-#print(err_output_mat)
-#
-#
-#
-# jnt_index = np.arange(1,8)
-# fig, ax = plt.subplots()
-# w = 0.2
-# space = 0.2
-# capsize = 2
-# fontsize = 30
-#
-# for i in range(len(abs_rms_list)):
-#     ax.bar(jnt_index+space*(i-1), abs_rms_list[i],  width=w,align='center', alpha=0.5, ecolor='black', capsize=capsize, label=legend_list[i])
-#
-# ax.set_xticks(jnt_index)
-# labels = ['Joint '+str(i+1) for i in range(6)]
-# labels.append('Avg')
-# # ax.set_title('Absolute RMSE for Trajectory Test')
-# ax.yaxis.grid(True)
-# ax.autoscale(tight=True)
-# maxValue = max([max(list) for list in abs_rms_list])
-# plt.ylim(0, maxValue*1.2)
-#
-# # Save the figure and show
-# ax.set_xticklabels(labels, fontsize=font_size)
-# ax.set_ylabel(r'$\epsilon_{rms}$', fontsize=font_size)
-# ax.legend(fontsize=font_size)
-# plt.xticks(fontsize=font_size)
-# plt.yticks(fontsize=font_size)
-# plt.tight_layout()
-# plt.show()
-# fig.savefig(join(train_data_path, "result",'TrajTest_AbsRMS.pdf'),bbox_inches='tight')
-#
-#
-#
-# jnt_index = np.arange(1,8)
-# fig, ax = plt.subplots()
-# w = 0.2
-# space = 0.2
-# capsize = 2
-# fontsize = 30
-#
-# for i in range(len(rel_rms_list)):
-#     ax.bar(jnt_index+space*(i-1), rel_rms_list[i],  width=w,align='center', alpha=0.5, ecolor='black', capsize=capsize, label=legend_list[i])
-#
-# ax.set_xticks(jnt_index)
-# labels = ['Joint '+str(i+1) for i in range(6)]
-# labels.append('Avg')
-# # ax.set_title('Absolute RMSE for Trajectory Test')
-# ax.yaxis.grid(True)
-# ax.autoscale(tight=True)
-# maxValue = max([max(list) for list in rel_rms_list])
-# plt.ylim(0, maxValue*1.2)
-#
-# # Save the figure and show
-# ax.set_xticklabels(labels, fontsize=font_size)
-# ax.set_ylabel(r'$\epsilon_{rms}\%$', fontsize=font_size)
-# ax.legend(fontsize=font_size)
-# plt.xticks(fontsize=font_size)
-# plt.yticks(fontsize=font_size)
-# plt.tight_layout()
-# plt.show()
-# fig.savefig(join(train_data_path, "result",'TrajTest_RelRMS.pdf'),bbox_inches='tight')
-#
-#
-# print('Avg Absolute RMSE: ',[lst[-1] for lst in abs_rms_list])
-# print('Avg Relative RMSE: ',[lst[-1] for lst in rel_rms_list])
+    plt.show()
+    # save_dir = join(root_path, 'train', "result")
+    # Path(save_dir).mkdir(parents=True, exist_ok=True)
+    # fig.savefig(join(save_dir,'Dist_'+type_lst[k]+'_OfflineTest_RelRMS.pdf'),bbox_inches='tight')
+
+    break
+
+
