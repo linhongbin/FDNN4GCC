@@ -12,6 +12,7 @@ matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from AnalyticalModel import *
 import numpy as np
+import scipy.io as sio
 from pathlib import Path
 
 
@@ -98,26 +99,30 @@ def cal_baselines_rms(train_data_path, test_data_path, TM_param_vec):
 
 train_simulate_num_list = [10, 50, 100,500,1000, 5000]
 repetitive_num = 2
-type_lst = ['NN_Dist_0.02', 'NN_Dist_1']
+simulate_type = 'MLSE4POL'
+dist_lst = [1,2]
+
 baseline_num = 3
 font_size = 20
 legend_size = 17
 
 
-for k in range(len(type_lst)):
+for k in range(len(dist_lst)):
     abs_rms_mean_arr_list = []
     rel_rms_mean_arr_list = []
     abs_rms_std_arr_list = []
     rel_rms_std_arr_list = []
-
+    root_path = join("data", "MTMR_28002", "sim", 'random', simulate_type, str(dist_lst[k]))
+    load_dict = sio.loadmat(join(root_path, 'simulation_param.mat'))
+    TM_param_vec = load_dict['TM_param_vec']
     for i in range(len(train_simulate_num_list)):
         abs_rms_mean_mat = np.zeros((repetitive_num, baseline_num))
         rel_rms_mean_mat = np.zeros((repetitive_num, baseline_num))
-        root_path = join("data", "MTMR_28002", "sim", 'random', type_lst[k])
+
         for j in range(repetitive_num):
             train_data_path = join(root_path, 'train', "N"+str(train_simulate_num_list[i]), 'D6_SinCosInput',str(j+1))
             test_data_path = join(root_path, 'test', "N20000", 'D6_SinCosInput')
-            abs_rms_mean_list, rel_rms_mean_list = cal_baselines_rms(train_data_path, test_data_path)
+            abs_rms_mean_list, rel_rms_mean_list = cal_baselines_rms(train_data_path, test_data_path, TM_param_vec)
             abs_rms_mean_mat[j,:] = np.asarray(abs_rms_mean_list)
             rel_rms_mean_mat[j, :] = np.asarray(rel_rms_mean_list)
 
@@ -214,10 +219,10 @@ for k in range(len(type_lst)):
 
 
     plt.show()
-    # save_dir = join(root_path, 'train', "result")
-    # Path(save_dir).mkdir(parents=True, exist_ok=True)
-    # fig.savefig(join(save_dir,'Dist_'+type_lst[k]+'_OfflineTest_RelRMS.pdf'),bbox_inches='tight')
+    save_dir = join(root_path, 'train', "result")
+    Path(save_dir).mkdir(parents=True, exist_ok=True)
+    fig.savefig(join(save_dir,'Dist_'+simulate_type+'_'+str(dist_lst[k])+'_OfflineTest_RelRMS.pdf'),bbox_inches='tight')
 
-    break
+
 
 
