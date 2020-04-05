@@ -84,7 +84,7 @@ experiment_sets_num = 2
 param_noise_scale_lst = [1e-3, 4e-3]
 
 for k in range(experiment_sets_num):
-    save_dir = join(root_dir, str(k+1))
+    save_dir = join(root_dir, "bias_"+str(param_noise_scale_lst[k]))
 
     # save simulation param
     create_TM_param(save_dir, param_noise_scale=param_noise_scale_lst[k])

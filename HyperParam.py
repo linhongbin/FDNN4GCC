@@ -32,9 +32,9 @@ def get_hyper_param(robot, use_net=None, train_type=None, is_sim = False, sim_di
                 elif sim_distScale == 1e-3:
                     param_dict['initLamda'] = 1.5
                     param_dict['endLamda'] = 1
-                elif sim_distScale ==  1e-1:
-                    param_dict['initLamda'] = 2
-                    param_dict['endLamda'] = 1.5
+                elif sim_distScale ==  4e-3:
+                    param_dict['initLamda'] = 0.5
+                    param_dict['endLamda'] = 0.4
                 else:
                     raise Exception("not support")
 

@@ -151,11 +151,11 @@ train_simulate_num_list = [10, 50, 100,500,1000, 5000]
 validate_simulate_num = 20000
 test_simulate_num = 20000
 
-repetitive_num = 4
-param_noise_scale_lst = [1e-3, 1e-1]
-for k in range(1,len(param_noise_scale_lst)):
+repetitive_num = 10
+param_noise_scale_lst = [1e-3, 4e-3]
+for k in range(len(param_noise_scale_lst)):
 
-    save_dir = join("data", "MTMR_28002", "sim", "random", 'MLSE4POL',str(k+1))
+    save_dir = join("data", "MTMR_28002", "sim", "random", 'MLSE4POL', "bias_"+str(param_noise_scale_lst[k]))
 
     test_data_path = join(save_dir, 'validate', 'N'+str(validate_simulate_num), 'D6_SinCosInput')
     valid_data_path = join(save_dir, 'test', 'N'+str(validate_simulate_num), 'D6_SinCosInput')

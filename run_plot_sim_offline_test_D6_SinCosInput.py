@@ -100,19 +100,19 @@ def cal_baselines_rms(train_data_path, test_data_path, TM_param_vec):
 train_simulate_num_list = [10, 50, 100,500,1000, 5000]
 repetitive_num = 2
 simulate_type = 'MLSE4POL'
-dist_lst = [1,2]
+param_noise_scale_lst = [1e-3, 4e-3]
 
 baseline_num = 3
 font_size = 20
 legend_size = 17
 
 
-for k in range(len(dist_lst)):
+for k in range(len(param_noise_scale_lst)):
     abs_rms_mean_arr_list = []
     rel_rms_mean_arr_list = []
     abs_rms_std_arr_list = []
     rel_rms_std_arr_list = []
-    root_path = join("data", "MTMR_28002", "sim", 'random', simulate_type, str(dist_lst[k]))
+    root_path = join("data", "MTMR_28002", "sim", 'random', simulate_type, "bias_"+str(param_noise_scale_lst[k]))
     load_dict = sio.loadmat(join(root_path, 'simulation_param.mat'))
     TM_param_vec = load_dict['TM_param_vec']
     for i in range(len(train_simulate_num_list)):
@@ -221,7 +221,7 @@ for k in range(len(dist_lst)):
     plt.show()
     save_dir = join(root_path, 'train', "result")
     Path(save_dir).mkdir(parents=True, exist_ok=True)
-    fig.savefig(join(save_dir,'Dist_'+simulate_type+'_'+str(dist_lst[k])+'_OfflineTest_RelRMS.pdf'),bbox_inches='tight')
+    fig.savefig(join(save_dir,'Dist_'+simulate_type+'_'+str(param_noise_scale_lst[k])+'_OfflineTest_RelRMS.pdf'),bbox_inches='tight')
 
 
 
