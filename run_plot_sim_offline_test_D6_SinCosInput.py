@@ -171,12 +171,15 @@ for k in range(len(param_noise_scale_lst)):
     # Path(save_dir).mkdir(parents=True, exist_ok=True)
     # fig.savefig(join(save_dir,'Dist_'+str(DistScale)+'_OfflineTest_AbsRMS.pdf'),bbox_inches='tight')
     #
+    if k == 0:
+        legend_list = ['Low-bias PTM in [32]', 'FDNN with LfS', 'FDNN with PKD']
+    else:
+        legend_list = ['High-bias PTM in [32]', 'FDNN with LfS', 'FDNN with PKD']
 
-    legend_list = ['Biased Model in [39]', 'FDNN with LfS', 'FDNN with PKD']
     fill_color_list = ['tab:green', 'tab:orange', 'tab:blue']
     paperFontSize = 20
 
-    fig,ax = plt.subplots(figsize=(8, 4))
+    fig,ax = plt.subplots(figsize=(8.4, 4.8))
 
     plt.rcParams["font.family"] = "Times New Roman"
     matplotlib.rcParams.update({'font.size': paperFontSize})

@@ -130,83 +130,83 @@ def loop_func(train_data_path, test_data_path, use_net, robot, train_type='BP', 
 ################################################################################################################
 # uncomment to use
 
-##################################################################################
-# # train real MTM
-# train_data_path = join("data", "MTMR_28002", "real", "uniform", "N4", 'D6_SinCosInput', "dual")
-# valid_data_path = join("data", "MTMR_28002", "real", "uniform",  "N5", 'D6_SinCosInput', "dual")
-# test_data_path = join("data", "MTMR_28002", "real", "random", 'N319','D6_SinCosInput')
-# loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002', train_type='BP', valid_data_path=valid_data_path)
-# loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002', train_type='PKD', valid_data_path= valid_data_path)
-# loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002', train_type='PKD', valid_data_path= valid_data_path, is_inputNormalized=False, is_outputNormalized=True)
-# loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002', train_type='PKD', valid_data_path= valid_data_path, is_inputNormalized=True, is_outputNormalized=False)
-# loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002', train_type='PKD', valid_data_path= valid_data_path, is_inputNormalized=False, is_outputNormalized=False)
+#################################################################################
+# train real MTM
+train_data_path = join("data", "MTMR_28002", "real", "uniform", "N4", 'D6_SinCosInput', "dual")
+valid_data_path = join("data", "MTMR_28002", "real", "uniform",  "N5", 'D6_SinCosInput', "dual")
+test_data_path = join("data", "MTMR_28002", "real", "random", 'N319','D6_SinCosInput')
+loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002', train_type='BP', valid_data_path=valid_data_path)
+loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002', train_type='PKD', valid_data_path= valid_data_path)
+loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002', train_type='PKD', valid_data_path= valid_data_path, is_inputNormalized=False, is_outputNormalized=True)
+loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002', train_type='PKD', valid_data_path= valid_data_path, is_inputNormalized=True, is_outputNormalized=False)
+loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002', train_type='PKD', valid_data_path= valid_data_path, is_inputNormalized=False, is_outputNormalized=False)
 
 
-
-##################################################################################
-# train sim MTM
-sum_start_time = time.clock()
-
-train_simulate_num_list = [10, 50, 100,500,1000, 5000]
-validate_simulate_num = 20000
-test_simulate_num = 20000
-
-repetitive_num = 10
-param_noise_scale_lst = [1e-3, 4e-3]
-for k in range(len(param_noise_scale_lst)):
-
-    save_dir = join("data", "MTMR_28002", "sim", "random", 'MLSE4POL', "bias_"+str(param_noise_scale_lst[k]))
-
-    test_data_path = join(save_dir, 'validate', 'N'+str(validate_simulate_num), 'D6_SinCosInput')
-    valid_data_path = join(save_dir, 'test', 'N'+str(validate_simulate_num), 'D6_SinCosInput')
-    for j in range(len(train_simulate_num_list)):
-        for i in range(repetitive_num):
-            loop_time = time.clock()
-            print("train_simulate_num ", train_simulate_num_list[j], " repetitive no: ", i)
-            train_data_path = join(save_dir, "train", 'N'+str(train_simulate_num_list[j]), 'D6_SinCosInput', str(i+1))
-            print("train BP")
-            loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection', 'MTMR28002', train_type='BP',is_sim=True,valid_data_path=valid_data_path,
-                      sim_distScale = param_noise_scale_lst[k])
-
-            # print the time info
-            loop_time = time.clock() - loop_time
-            sum_time = time.clock() - sum_start_time
-            total_num = len(train_simulate_num_list)*repetitive_num * len(param_noise_scale_lst)
-            finish_num = i + j*repetitive_num + k*repetitive_num*len(train_simulate_num_list) + 0.5
-            total_time = sum_time *  total_num / finish_num
-            print("")
-            print("*******************************")
-            print("finish (" + str(finish_num) + "/" + str(total_num) + ")",
-                  "duration of one loop: " + str(datetime.timedelta(seconds=loop_time)),
-                  "  time:" + str(datetime.timedelta(seconds=sum_time)) + " / " + str(
-                      datetime.timedelta(seconds=total_time)))
-            print("*******************************")
-            print("")
-
-            print("train PKD")
-            loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection', 'MTMR28002', train_type='PKD',
-                      is_sim=True, valid_data_path=valid_data_path, sim_distScale = param_noise_scale_lst[k], simulation_param_path=save_dir)
-
-            # print the time info
-            loop_time = time.clock() - loop_time
-            sum_time = time.clock() - sum_start_time
-            total_num = len(train_simulate_num_list)*repetitive_num * len(param_noise_scale_lst)
-            finish_num = i + j * repetitive_num + k * repetitive_num * len(train_simulate_num_list) + 1
-            total_time = sum_time * total_num / finish_num
-            print("")
-            print("*******************************")
-            print("finish (" + str(finish_num) + "/" + str(total_num) + ")",
-                  "duration of one loop: " + str(datetime.timedelta(seconds=loop_time)),
-                  "  time:" + str(datetime.timedelta(seconds=sum_time)) + " / " + str(
-                      datetime.timedelta(seconds=total_time)))
-            print("*******************************")
-            print("")
-
-
-
-
-
-
-
-
-
+#
+# ##################################################################################
+# # train sim MTM
+# sum_start_time = time.clock()
+#
+# train_simulate_num_list = [10, 50, 100,500,1000, 5000]
+# validate_simulate_num = 20000
+# test_simulate_num = 20000
+#
+# repetitive_num = 10
+# param_noise_scale_lst = [1e-3, 4e-3]
+# for k in range(len(param_noise_scale_lst)):
+#
+#     save_dir = join("data", "MTMR_28002", "sim", "random", 'MLSE4POL', "bias_"+str(param_noise_scale_lst[k]))
+#
+#     test_data_path = join(save_dir, 'validate', 'N'+str(validate_simulate_num), 'D6_SinCosInput')
+#     valid_data_path = join(save_dir, 'test', 'N'+str(validate_simulate_num), 'D6_SinCosInput')
+#     for j in range(len(train_simulate_num_list)):
+#         for i in range(repetitive_num):
+#             loop_time = time.clock()
+#             print("train_simulate_num ", train_simulate_num_list[j], " repetitive no: ", i)
+#             train_data_path = join(save_dir, "train", 'N'+str(train_simulate_num_list[j]), 'D6_SinCosInput', str(i+1))
+#             print("train BP")
+#             loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection', 'MTMR28002', train_type='BP',is_sim=True,valid_data_path=valid_data_path,
+#                       sim_distScale = param_noise_scale_lst[k])
+#
+#             # print the time info
+#             loop_time = time.clock() - loop_time
+#             sum_time = time.clock() - sum_start_time
+#             total_num = len(train_simulate_num_list)*repetitive_num * len(param_noise_scale_lst)
+#             finish_num = i + j*repetitive_num + k*repetitive_num*len(train_simulate_num_list) + 0.5
+#             total_time = sum_time *  total_num / finish_num
+#             print("")
+#             print("*******************************")
+#             print("finish (" + str(finish_num) + "/" + str(total_num) + ")",
+#                   "duration of one loop: " + str(datetime.timedelta(seconds=loop_time)),
+#                   "  time:" + str(datetime.timedelta(seconds=sum_time)) + " / " + str(
+#                       datetime.timedelta(seconds=total_time)))
+#             print("*******************************")
+#             print("")
+#
+#             print("train PKD")
+#             loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection', 'MTMR28002', train_type='PKD',
+#                       is_sim=True, valid_data_path=valid_data_path, sim_distScale = param_noise_scale_lst[k], simulation_param_path=save_dir)
+#
+#             # print the time info
+#             loop_time = time.clock() - loop_time
+#             sum_time = time.clock() - sum_start_time
+#             total_num = len(train_simulate_num_list)*repetitive_num * len(param_noise_scale_lst)
+#             finish_num = i + j * repetitive_num + k * repetitive_num * len(train_simulate_num_list) + 1
+#             total_time = sum_time * total_num / finish_num
+#             print("")
+#             print("*******************************")
+#             print("finish (" + str(finish_num) + "/" + str(total_num) + ")",
+#                   "duration of one loop: " + str(datetime.timedelta(seconds=loop_time)),
+#                   "  time:" + str(datetime.timedelta(seconds=sum_time)) + " / " + str(
+#                       datetime.timedelta(seconds=total_time)))
+#             print("*******************************")
+#             print("")
+#
+#
+#
+#
+#
+#
+#
+#
+#
