@@ -48,9 +48,10 @@ arrow_properties = dict(
 
 plt.annotate(
     "Early Stopping", xy=(smallest_idx, 0.1),
-    xytext=(smallest_idx+4, 0.14),
+    xytext=(smallest_idx-60, 0.03),
     arrowprops=arrow_properties)
-
+#
+ax.margins(y=0.1, x=.03)
 
 ax.yaxis.grid(True)
 plt.rcParams["font.serif"] = "Times New Roman"
@@ -65,8 +66,8 @@ csfont = {'family' : 'Times New Roman',
 ax.set_xlabel('Epoches',**csfont)
 ax.set_ylabel(r'Loss',**csfont)
 a = plt.gca()
-
-ax.set_ylim([0, max(train_losses.tolist())+0.02])
+#
+# ax.set_ylim([-0.1, max(train_losses.tolist())+0.02])
 
 xtick = a.get_xticks().astype(int)
 ytick = np.around(a.get_yticks().astype(float), decimals=4)
@@ -74,14 +75,15 @@ ytick = np.around(a.get_yticks().astype(float), decimals=4)
 a.set_xticklabels(xtick, **csfont)
 a.set_yticklabels(ytick, **csfont)
 
-#
-# ax.margins(y=0, x=.03)
 
+#
 
 
 font = matplotlib.font_manager.FontProperties(family='Times New Roman',size=paperFontSize)
 ax.legend(loc='upper center', prop=font, bbox_to_anchor=(0.5, 1.3),
           fancybox=True, shadow=True, ncol=3)
+#
+plt.yscale('log')
 #
 # ax[0].tick_params(axis='both', which='major', labelsize=paperFontSize)
 # ax[0].tick_params(axis='both', which='minor', labelsize=paperFontSize)

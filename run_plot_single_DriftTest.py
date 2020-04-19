@@ -59,7 +59,7 @@ for file_name in file_name_lst:
 paperFontSize = 14
 paperLineWidth =2.5
 
-legend_list = ['Model in [32]', 'DFNN with LfS', 'DFNN with PKD']
+legend_list = ['PTM in [32]', 'FDNN with LfS', 'FDNN with PKD']
 
 
 fig, ax = plt.subplots(2, figsize=(6.7, 4))
