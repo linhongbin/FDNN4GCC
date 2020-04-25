@@ -107,7 +107,7 @@ for i in range(3):
 
 paperFontSize = 14
 
-legend_list = ['PTM in [32]', 'FDNN with LfS', 'FDNN with PKD']
+legend_list = ['PTM in [32]', 'FDNNs with LfS', 'FDNNs with PKD']
 
 #import matplotlib as mpl
 #mpl.style.use('seaborn')

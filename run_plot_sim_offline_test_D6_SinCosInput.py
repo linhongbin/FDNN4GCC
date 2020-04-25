@@ -26,7 +26,7 @@ from pathlib import Path
 # load Trajectory Test experiment data
 
 
-def cal_baselines_rms(train_data_path, test_data_path, TM_param_vec):
+def cal_baselines_rms(train_data_path, test_data_path, TM_param_vec, BP_train_data_path):
     test_dataset = load_data_dir(join(test_data_path, "data"), device='cpu',input_scaler=None, output_scaler=None,
                                  is_inputScale = False, is_outputScale = False)
 
@@ -50,7 +50,7 @@ def cal_baselines_rms(train_data_path, test_data_path, TM_param_vec):
     # get predict DNN with Knowledge Distillation output
     use_net = 'ReLU_Dual_UDirection'
     train_type = 'BP'
-    load_model_path = join(train_data_path, "result", "model")
+    load_model_path = join(BP_train_data_path, "result", "model")
     model = get_model('MTM', use_net, D, device=device)
     model, _, _ = load_model(load_model_path, use_net+'_'+train_type, model)
     test_output_hat_mat_List.append(model.predict_NP(test_input_mat))
@@ -113,6 +113,7 @@ for k in range(len(param_noise_scale_lst)):
     abs_rms_std_arr_list = []
     rel_rms_std_arr_list = []
     root_path = join("data", "MTMR_28002", "sim", 'random', simulate_type, "bias_"+str(param_noise_scale_lst[k]))
+    BP_root_path = join("data", "MTMR_28002", "sim", 'random', simulate_type, "bias_"+str(param_noise_scale_lst[1]))
     load_dict = sio.loadmat(join(root_path, 'simulation_param.mat'))
     TM_param_vec = load_dict['TM_param_vec']
     for i in range(len(train_simulate_num_list)):
@@ -121,8 +122,9 @@ for k in range(len(param_noise_scale_lst)):
 
         for j in range(repetitive_num):
             train_data_path = join(root_path, 'train', "N"+str(train_simulate_num_list[i]), 'D6_SinCosInput',str(j+1))
+            BP_train_data_path = join(BP_root_path, 'train', "N"+str(train_simulate_num_list[i]), 'D6_SinCosInput',str(j+1))
             test_data_path = join(root_path, 'test', "N20000", 'D6_SinCosInput')
-            abs_rms_mean_list, rel_rms_mean_list = cal_baselines_rms(train_data_path, test_data_path, TM_param_vec)
+            abs_rms_mean_list, rel_rms_mean_list = cal_baselines_rms(train_data_path, test_data_path, TM_param_vec, BP_train_data_path)
             abs_rms_mean_mat[j,:] = np.asarray(abs_rms_mean_list)
             rel_rms_mean_mat[j, :] = np.asarray(rel_rms_mean_list)
 
@@ -172,9 +174,9 @@ for k in range(len(param_noise_scale_lst)):
     # fig.savefig(join(save_dir,'Dist_'+str(DistScale)+'_OfflineTest_AbsRMS.pdf'),bbox_inches='tight')
     #
     if k == 0:
-        legend_list = ['Low-bias PTM in [32]', 'FDNN with LfS', 'FDNN with PKD']
+        legend_list = ['Low-bias PTM in [32]', 'FDNNs with LfS', 'FDNNs with PKD']
     else:
-        legend_list = ['High-bias PTM in [32]', 'FDNN with LfS', 'FDNN with PKD']
+        legend_list = ['High-bias PTM in [32]', 'FDNNs with LfS', 'FDNNs with PKD']
 
     fill_color_list = ['tab:green', 'tab:orange', 'tab:blue']
     paperFontSize = 20

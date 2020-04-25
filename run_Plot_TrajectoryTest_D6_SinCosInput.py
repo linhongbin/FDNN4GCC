@@ -64,7 +64,7 @@ test_output_hat_mat_List.append(model.predict_NP(test_input_mat))
 
 
 
-legend_list = ['PTM in [32]', 'FDNN with LfS', 'FDNN with PKD']
+legend_list = ['PTM in [32]', 'FDNNs with LfS', 'FDNNs with PKD']
 
 
 # plot predict error bar figures
