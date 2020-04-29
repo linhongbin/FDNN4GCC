@@ -1,0 +1,9 @@
+{
+"joint_pos_upper_limit": [30,45,34,190,175,40],
+"joint_pos_lower_limit": [-30,-14,-34,-80,-85,-40],
+"coupling_index_list": [2,3],
+"coupling_upper_limit": [41],
+"coupling_lower_limit": [-11],
+"ARM_NAME": "",
+"SN": ""
+}
