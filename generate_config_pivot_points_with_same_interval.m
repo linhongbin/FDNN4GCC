@@ -1,7 +1,7 @@
 % joint limits
 % Read 'dataCollection_config_customized.json' file
 ARM_NAME = 'MTMR'
-SN = '12345'
+SN = '31519'
 root_path = fullfile('data', [ARM_NAME, '_',SN], 'real')
 
 fid = fopen(fullfile(root_path, 'dataCollection_config_customized.json'));
