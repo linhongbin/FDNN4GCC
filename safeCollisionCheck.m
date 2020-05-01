@@ -1,5 +1,5 @@
 ARM_NAME = 'MTMR'
-SN = '12345'
+SN = '31519'
 load_file = fullfile('data', [ARM_NAME, '_',SN], 'real', 'uniform', 'raw_data', 'desired_pivot_points.mat')
 load(load_file)
 mtm_arm = mtm(ARM_NAME)
