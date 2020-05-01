@@ -20,7 +20,8 @@ coupling_upper_limit = [config.coupling_upper_limit];
 coupling_lower_limit = [config.coupling_lower_limit];
 
 % pivot points of each joint
-joint_pivot_num_list = [4,4,4, 4,4,4];
+N = 4;
+joint_pivot_num_list = N * [1,1,1,1,1,1];
 
 % margin to the joint limit
 joint_lim_margin_list = [2, 2, 2, 2, 2, 2];
@@ -67,7 +68,7 @@ joint3_coup_pivot_mat_safeCheck = joint3_coup_pivot_mat([1,end], [1,end]);
 config_mat_safeCheck = joint_all_combs(pivot_mat_safeCheck, joint3_coup_pivot_mat_safeCheck);
 
 
-pivot_points_path = fullfile(root_path, 'uniform', 'raw_data')
+pivot_points_path = fullfile(root_path, 'uniform', 'raw_data', ['N', int2str(N)])
 if ~exist(pivot_points_path, 'dir')
    mkdir(pivot_points_path)
 end
