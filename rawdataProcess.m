@@ -1,5 +1,6 @@
 ARM_NAME = 'MTMR'
 SN = '31519'
+sensitive_deg = 1
 
 % process uniform raw data
 N = 4;
@@ -8,10 +9,10 @@ data_path = fullfile(root_path, 'raw_data')
 save_path = fullfile(root_path, 'D6_SinCosInput', 'dual', 'data');
 jnt_pos_file = fullfile(data_path, 'Real_MTMR_pos.mat');
 jnt_tor_file = fullfile(data_path, 'Real_MTMR_tor.mat');
-[input_mat_1, output_mat_1] = rawdata2SinCosInput(jnt_pos_file,jnt_tor_file);
+[input_mat_1, output_mat_1] = rawdata2SinCosInput(jnt_pos_file,jnt_tor_file, sensitive_deg);
 jnt_pos_file = fullfile(data_path, 'Real_MTMR_pos_reverse.mat');
 jnt_tor_file = fullfile(data_path, 'Real_MTMR_tor_reverse.mat');
-[input_mat_2, output_mat_2] = rawdata2SinCosInput(jnt_pos_file,jnt_tor_file);
+[input_mat_2, output_mat_2] = rawdata2SinCosInput(jnt_pos_file,jnt_tor_file, sensitive_deg);
 input_mat = [input_mat_1; input_mat_2];
 output_mat = [output_mat_1; output_mat_2];
 if ~exist(save_path, 'dir')
@@ -26,7 +27,7 @@ data_path = fullfile(root_path, 'raw_data')
 save_path = fullfile(root_path, 'D6_SinCosInput', 'data')
 jnt_pos_file = fullfile(data_path, 'Real_MTMR_pos.mat');
 jnt_tor_file = fullfile(data_path, 'Real_MTMR_tor.mat');
-[input_mat, output_mat] = rawdata2SinCosInput(jnt_pos_file,jnt_tor_file);
+[input_mat, output_mat] = rawdata2SinCosInput(jnt_pos_file,jnt_tor_file,sensitive_deg);
 if ~exist(save_path, 'dir')
    mkdir(save_path)
 end
@@ -34,7 +35,7 @@ save(fullfile(save_path, ['N', int2str(N),'_SinCosInput']), 'input_mat', 'output
 
 
 
-function [input_mat, output_mat] = rawdata2SinCosInput(jnt_pos_file, jnt_tor_file)
+function [input_mat, output_mat] = rawdata2SinCosInput(jnt_pos_file, jnt_tor_file, sensitive_deg)
     load_file = fullfile(jnt_pos_file)
     load(load_file)
     load_file = fullfile(jnt_tor_file)
@@ -55,7 +56,22 @@ function [input_mat, output_mat] = rawdata2SinCosInput(jnt_pos_file, jnt_tor_fil
     % trigonometric transformation
     last_input_mat = [zeros(1,D);input_mat(1:end-1,:)];
     delta_mat = input_mat - last_input_mat;
-    u_mat = arrayfun(@step_func, delta_mat);
+    u_mat = zeros(size(delta_mat))
+    tmp = arrayfun(@step_func, delta_mat)
+    for i = 1:size(delta_mat,1)
+        if i == 1
+            u_mat(i,:) = tmp(i,:);
+        else
+            for j = 1:size(delta_mat,2)
+                if abs(delta_mat(i,j)) > deg2rad(sensitive_deg)
+                    u_mat(i,j) = tmp(i,j);
+                else
+                    u_mat(i,j) = u_mat(i-1,j);
+                end
+            end
+        end
+    end
+
     input_mat = [sin(input_mat), cos(input_mat), u_mat];
 end
 
