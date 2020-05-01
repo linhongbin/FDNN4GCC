@@ -12,7 +12,7 @@ import scipy
 import time
 import datetime
 def loop_func(train_data_path, test_data_path, use_net, robot, train_type='BP', valid_data_path=None, is_sim = False, is_inputNormalized=True, is_outputNormalized=True,
-              sim_distScale=None, simulation_param_path=None):
+              sim_distScale=None, simulation_param_path=None, load_PTM_param_file_str=None):
     param_dict = get_hyper_param(robot, train_type=train_type, is_sim=is_sim, sim_distScale = sim_distScale)
 
     max_training_epoch = param_dict['max_training_epoch'] # stop train when reach maximum training epoch
@@ -39,6 +39,9 @@ def loop_func(train_data_path, test_data_path, use_net, robot, train_type='BP', 
             teacherModel = MTM_MLSE4POL()
             load_dict = sio.loadmat(join(simulation_param_path, 'simulation_param.mat'))
             teacherModel.param_vec = load_dict['TM_param_vec']
+
+        if load_PTM_param_file_str is not None:
+            teacherModel.decode_json_file(load_PTM_param_file_str)
 
         train_loader, valid_loader, teacher_loader, input_mean, input_std, output_mean, output_std = load_preProcessData(join(train_data_path, "data"),
                                                                                                                         batch_size,
@@ -89,9 +92,10 @@ def loop_func(train_data_path, test_data_path, use_net, robot, train_type='BP', 
     # test_loss, abs_rms_vec, rel_rms_vec = evaluate_rms(model, loss_fn, test_data_path, input_scaler, output_scaler, device, verbose=True)
 
     # save model to "result/model" folder
-    test_dataset = load_data_dir(join(test_data_path, "data"), device=device, input_scaler=None, output_scaler=None, is_inputScale = False, is_outputScale = False)
+    test_dataset = load_data_dir(join(test_data_path, "data"), device='cpu', input_scaler=None, output_scaler=None, is_inputScale = False, is_outputScale = False)
     feature_mat = test_dataset.x_data.numpy()
     target_mat = test_dataset.y_data.numpy()
+    model = model.to('cpu')
     target_hat_mat = model.predict_NP(feature_mat)
 
     rel_rms_vec = np.sqrt(np.divide(np.mean(np.square(target_hat_mat - target_mat), axis=0),
@@ -132,13 +136,20 @@ def loop_func(train_data_path, test_data_path, use_net, robot, train_type='BP', 
 
 #################################################################################
 # train real MTM
+
+### setting
 ARM_NAME = "MTMR"
 SN = "31519"
 train_data_path = join("data", ARM_NAME+'_'+SN, "real", "uniform", "N4", 'D6_SinCosInput', "dual")
 valid_data_path = join("data", ARM_NAME+'_'+SN, "real", "random",  "N200", 'D6_SinCosInput')
 test_data_path = join("data", ARM_NAME+'_'+SN, "real", "random", "N200",'D6_SinCosInput')
-loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002', train_type='BP', valid_data_path=valid_data_path)
-#loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002', train_type='PKD', valid_data_path= valid_data_path)
+load_PTM_param_file_str = join("data", "MTMR_31519", "real", "gc-MTMR-31519.json")
+
+
+
+###  train models
+# loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002', train_type='BP', valid_data_path=valid_data_path)
+loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002', train_type='PKD', valid_data_path= valid_data_path, load_PTM_param_file_str = load_PTM_param_file_str)
 # loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002', train_type='PKD', valid_data_path= valid_data_path, is_inputNormalized=False, is_outputNormalized=True)
 # loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002', train_type='PKD', valid_data_path= valid_data_path, is_inputNormalized=True, is_outputNormalized=False)
 # loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002', train_type='PKD', valid_data_path= valid_data_path, is_inputNormalized=False, is_outputNormalized=False)

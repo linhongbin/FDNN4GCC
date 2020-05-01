@@ -4,6 +4,7 @@ from torch.utils.data import Dataset
 import torch
 from sklearn import preprocessing
 from math import pi
+import json
 
 
 class FK_MODEL():
@@ -394,6 +395,19 @@ class MTM_MLSE4POL():
 
         output_mat = self.predict(input_mat)
         return input_mat, output_mat
+
+    def decode_json_file(self, json_file_str):
+        try:
+            with open(json_file_str) as json_file:
+                data = json.load(json_file)
+                gc_dynamic_params_pos_arr = data["GC_controller"]["gc_dynamic_params_pos"]
+                gc_dynamic_params_neg_arr = data["GC_controller"]["gc_dynamic_params_neg"]
+        except IOError:
+            raise Exception("Cannot find "+json_file_str)
+
+        gc_dynamic_params_arr = np.concatenate((gc_dynamic_params_pos_arr, gc_dynamic_params_neg_arr[10:]))
+        self.param_vec = gc_dynamic_params_arr.reshape(70,1)
+        print("update param vector to :", self.param_vec)
 
 
 # fk_model = FK_MODEL()
