@@ -18,10 +18,11 @@ from Controller import Controller
 
 #####################################
 # settings
-MTM_ARM = 'MTMR'
+MTM_ARM = 'MTML'
 use_net = 'ReLU_Dual_UDirection'
-load_model_path = join("data", "MTMR_31519", "real", "uniform", "N4", 'D6_SinCosInput', "dual", "result", "model")
-load_PTM_param_path = join("data", "MTMR_31519", "real", "gc-MTMR-31519.json")
+SN = '41878'
+load_model_path = join("data", MTM_ARM+'_'+SN, "real", "uniform", "N4", 'D6_SinCosInput', "dual", "result", "model")
+load_PTM_param_path = join("data",  MTM_ARM+'_'+SN, "real", "gc-"+MTM_ARM+"-"+SN +".json")
 
 # controller_type = 'LfS' # Learn-from-Sratch approach
 controller_type = 'PKD' # Physical Knowledge Distillation

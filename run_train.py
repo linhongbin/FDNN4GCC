@@ -4,7 +4,7 @@ from loadDataTool import load_preProcessData
 from os.path import join
 from evaluateTool import *
 import scipy.io as sio
-from os import mkdir
+from os import makedirs
 from loadModel import get_model, save_model
 from HyperParam import get_hyper_param
 from AnalyticalModel import *
@@ -109,7 +109,7 @@ def loop_func(train_data_path, test_data_path, use_net, robot, train_type='BP', 
 
     model_save_path = join(train_data_path,"result","model")
     try:
-        mkdir(model_save_path)
+        makedirs(model_save_path)
     except:
         print('Make directory: ', model_save_path + " already exist")
 
@@ -138,17 +138,17 @@ def loop_func(train_data_path, test_data_path, use_net, robot, train_type='BP', 
 # train real MTM
 
 ### setting
-ARM_NAME = "MTMR"
-SN = "31519"
-train_data_path = join("data", ARM_NAME+'_'+SN, "real", "uniform", "N4", 'D6_SinCosInput', "dual")
-valid_data_path = join("data", ARM_NAME+'_'+SN, "real", "random",  "N200", 'D6_SinCosInput')
-test_data_path = join("data", ARM_NAME+'_'+SN, "real", "random", "N200",'D6_SinCosInput')
-load_PTM_param_file_str = join("data", "MTMR_31519", "real", "gc-MTMR-31519.json")
+ARM_NAME = "MTML"
+SN = "41878"
+train_data_path = join(".", "data", ARM_NAME+'_'+SN, "real", "uniform", "N4", 'D6_SinCosInput', "dual")
+valid_data_path = join(".", "data", ARM_NAME+'_'+SN, "real", "random",  "N160", 'D6_SinCosInput')
+test_data_path = join(".", "data", ARM_NAME+'_'+SN, "real", "random", "N40",'D6_SinCosInput')
+load_PTM_param_file_str = join(".", "data", "MTML_41878", "real", "gc-MTML-41878.json")
 
 
 
 ###  train models
-# loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002', train_type='BP', valid_data_path=valid_data_path)
+loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002', train_type='BP', valid_data_path=valid_data_path)
 loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002', train_type='PKD', valid_data_path= valid_data_path, load_PTM_param_file_str = load_PTM_param_file_str)
 # loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002', train_type='PKD', valid_data_path= valid_data_path, is_inputNormalized=False, is_outputNormalized=True)
 # loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002', train_type='PKD', valid_data_path= valid_data_path, is_inputNormalized=True, is_outputNormalized=False)

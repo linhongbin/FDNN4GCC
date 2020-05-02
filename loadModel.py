@@ -1,6 +1,6 @@
 from Net import *
 import numpy as np
-from os import path, mkdir
+from os import path, makedirs
 
 
 import torch
@@ -107,7 +107,7 @@ def get_model(robot, use_net, D, device='cpu'):
 
 def save_model(file_path, file_name, model, input_scaler=None, output_scaler=None):
     if not path.exists(file_path):
-        mkdir(file_path)
+        makedirs(file_path)
 
 
     if isinstance(model, list):
