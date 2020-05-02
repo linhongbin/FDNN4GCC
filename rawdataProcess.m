@@ -1,44 +1,57 @@
-ARM_NAME = 'MTMR'
-SN = '31519'
-sensitive_deg = 1
+function rawdataProcess(root_path, is_dual)
 
-% process uniform raw data
-N = 4;
-root_path = fullfile('data', [ARM_NAME, '_',SN], 'real', 'uniform', ['N', int2str(N)])
-data_path = fullfile(root_path, 'raw_data')
-save_path = fullfile(root_path, 'D6_SinCosInput', 'dual', 'data');
-jnt_pos_file = fullfile(data_path, 'Real_MTMR_pos.mat');
-jnt_tor_file = fullfile(data_path, 'Real_MTMR_tor.mat');
-[input_mat_1, output_mat_1] = rawdata2SinCosInput(jnt_pos_file,jnt_tor_file, sensitive_deg);
-jnt_pos_file = fullfile(data_path, 'Real_MTMR_pos_reverse.mat');
-jnt_tor_file = fullfile(data_path, 'Real_MTMR_tor_reverse.mat');
-[input_mat_2, output_mat_2] = rawdata2SinCosInput(jnt_pos_file,jnt_tor_file, sensitive_deg);
-input_mat = [input_mat_1; input_mat_2];
-output_mat = [output_mat_1; output_mat_2];
-if ~exist(save_path, 'dir')
-   mkdir(save_path)
+    % ARM_NAME = 'MTMR'
+    % SN = '31519'
+    sensitive_deg = 1;
+    D = 6;
+    % process uniform raw data
+    % N = 4;
+    % root_path = fullfile('data', [ARM_NAME, '_',SN], 'real', 'uniform', ['N', int2str(N)])
+    
+
+    data_path = fullfile(root_path, 'raw_data');
+    jnt_pos_file = fullfile(data_path, 'Real_MTMR_pos.mat');
+    jnt_tor_file = fullfile(data_path, 'Real_MTMR_tor.mat');
+    [input_mat_1, output_mat_1] = rawdata2SinCosInput(jnt_pos_file,jnt_tor_file, sensitive_deg, D);
+    
+    if is_dual
+        jnt_pos_file = fullfile(data_path, 'Real_MTMR_pos_reverse.mat');
+        jnt_tor_file = fullfile(data_path, 'Real_MTMR_tor_reverse.mat');
+        [input_mat_2, output_mat_2] = rawdata2SinCosInput(jnt_pos_file,jnt_tor_file, sensitive_deg, D);
+        input_mat = [input_mat_1; input_mat_2];
+        output_mat = [output_mat_1; output_mat_2];
+        save_path = fullfile(root_path, 'D6_SinCosInput', 'dual', 'data');
+    else
+        input_mat = input_mat_1;
+        output_mat = output_mat_1;
+        save_path = fullfile(root_path, 'D6_SinCosInput', 'data');
+    end
+    
+    if ~exist(save_path, 'dir')
+       mkdir(save_path)
+    end
+    save(fullfile(save_path, ['D', int2str(D),'_SinCosInput']), 'input_mat', 'output_mat');
+
+%     % process random raw data
+% %     N = 200;
+%     root_path = fullfile('data', [ARM_NAME, '_',SN], 'real', 'random', ['N', int2str(N)])
+%     data_path = fullfile(root_path, 'raw_data')
+%     save_path = fullfile(root_path, 'D6_SinCosInput', 'data')
+%     jnt_pos_file = fullfile(data_path, 'Real_MTMR_pos.mat');
+%     jnt_tor_file = fullfile(data_path, 'Real_MTMR_tor.mat');
+%     [input_mat, output_mat] = rawdata2SinCosInput(jnt_pos_file,jnt_tor_file,sensitive_deg);
+%     if ~exist(save_path, 'dir')
+%        mkdir(save_path)
+%     end
+%     save(fullfile(save_path, ['N', int2str(N),'_SinCosInput']), 'input_mat', 'output_mat');
+
+
 end
-save(fullfile(save_path, ['N', int2str(N),'_SinCosInput']), 'input_mat', 'output_mat');
 
-% process random raw data
-N = 200;
-root_path = fullfile('data', [ARM_NAME, '_',SN], 'real', 'random', ['N', int2str(N)])
-data_path = fullfile(root_path, 'raw_data')
-save_path = fullfile(root_path, 'D6_SinCosInput', 'data')
-jnt_pos_file = fullfile(data_path, 'Real_MTMR_pos.mat');
-jnt_tor_file = fullfile(data_path, 'Real_MTMR_tor.mat');
-[input_mat, output_mat] = rawdata2SinCosInput(jnt_pos_file,jnt_tor_file,sensitive_deg);
-if ~exist(save_path, 'dir')
-   mkdir(save_path)
-end
-save(fullfile(save_path, ['N', int2str(N),'_SinCosInput']), 'input_mat', 'output_mat');
-
-
-
-function [input_mat, output_mat] = rawdata2SinCosInput(jnt_pos_file, jnt_tor_file, sensitive_deg)
-    load_file = fullfile(jnt_pos_file)
+function [input_mat, output_mat] = rawdata2SinCosInput(jnt_pos_file, jnt_tor_file, sensitive_deg, D)
+    load_file = fullfile(jnt_pos_file);
     load(load_file)
-    load_file = fullfile(jnt_tor_file)
+    load_file = fullfile(jnt_tor_file);
     load(load_file)
     Torques_data = torques_data_process(current_position, desired_effort, 'mean', 0.3);
     input_mat = [];
@@ -48,16 +61,15 @@ function [input_mat, output_mat] = rawdata2SinCosInput(jnt_pos_file, jnt_tor_fil
         output_mat = [output_mat,Torques_data(:,2,i)];
     end
     
-    % signals for Joint 7 are discarded
-    D = 6;
+    % signals for Joint (i>D) are discarded
     input_mat = input_mat(1:D,:).';
     output_mat = output_mat(1:D,:).';
     
     % trigonometric transformation
     last_input_mat = [zeros(1,D);input_mat(1:end-1,:)];
     delta_mat = input_mat - last_input_mat;
-    u_mat = zeros(size(delta_mat))
-    tmp = arrayfun(@step_func, delta_mat)
+    u_mat = zeros(size(delta_mat));
+    tmp = arrayfun(@step_func, delta_mat);
     for i = 1:size(delta_mat,1)
         if i == 1
             u_mat(i,:) = tmp(i,:);

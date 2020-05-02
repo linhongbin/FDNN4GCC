@@ -1,1 +1,0 @@
-{"joint_pos_upper_limit":[8,8,34,190,175,40],"joint_pos_lower_limit":[-22,-14,-34,-80,-85,-40],"coupling_index_list":[2,3],"coupling_upper_limit":4,"coupling_lower_limit":-11,"ARM_NAME":"MTMR","SN":"12345"}

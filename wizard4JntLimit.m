@@ -1,36 +1,27 @@
-function output_file_str = run_calibrate_JointLimit(ARM_NAME, SN)
-    %  Author(s):  Hongbin LIN, Vincent Hui, Samuel Au
-    %  Created on: 2018-10-05
-    %  Copyright (c)  2018, The Chinese University of Hong Kong
-    %  This software is provided "as is" under BSD License, with
-    %  no warranty. The complete license can be found in LICENSE
+function dataCollection_config_customized_str = wizard4JntLimit(ARM_NAME, SN)
+    %  Author(s):  Hongbin LIN, Samuel Au
+    %  comments: Little wizard program to determine the joint limits for specific dVRK system based on different environment.
+    %            The goal is to protect dVRK from hitting environment leading to catastrophic damage.
 
     % checking if arguments correct
     argument_checking(ARM_NAME,...
         SN);
 
     % Read 'dataCollection_config.json' file
-    fid = fopen('dataCollection_config.json');
+    if strcmp(ARM_NAME, 'MTML')
+        dataCollection_config_str = 'dataCollection_config_MTML.json';
+    else
+        dataCollection_config_str = 'dataCollection_config_MTMR.json';
+    end
+    fid = fopen(dataCollection_config_str);
     if fid<3
-        error('cannot open file dataCollection_config.json, please check the path')
+        error('cannot open file dataCollection_config.json, please check the path');
     end
     raw = fread(fid, inf);
     str = char(raw');
     config = jsondecode(str);
     fclose(fid);
 
-    % Customized joint pose
-%     joint_origin_pose = [0,0,0,0,0,0,0];
-%     joint_tele_pose = [0,0,0,0,90,0,0];
-%     joint_pose_1 = [0,0,0,0,167,0,0];    % Pose of Joint5 that most likely to hit upper plane
-
-%     % Create a parent data folder for each MTM to store data
-%     if strcmp(ARM_NAME,'MTML')
-%         output_data_path_mtm = [config.data_collection.output_data_root_path,'/MTML_',SN];
-%     else
-%         output_data_path_mtm = [config.data_collection.output_data_root_path,'/MTMR_',SN];
-%     end
-%     mkdir(output_data_path_mtm);
 
     % Add ARM Info
     config.ARM_NAME = ARM_NAME;
@@ -41,36 +32,44 @@ function output_file_str = run_calibrate_JointLimit(ARM_NAME, SN)
     joint_origin_pose = [0,0,0,0,0,0,0];
     mtm_arm.move_joint(deg2rad(joint_origin_pose));
 
-
-    % prevent hitting front panel of cartesian space
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    % prevent hitting front plane of environment
     param_name = 'Joint2 maximum limit';
-    joint_init_pos = [0,0,0,-90,0,0,0];
+    if strcmp(ARM_NAME, 'MTML')
+        joint_init_pos = [0,0,0,90,0,0,0]; %try to move joint 4 to the pose that is most likely hit the front plane of environment
+    else
+        joint_init_pos = [0,0,0,-90,0,0,0];
+    end
+        
     couple_contraint =  0;
     joint_init_pos(2) = couple_contraint-0; %10 degree smaller for saftey reason
     joint_init_pos(3) = 0;
     MovingJointNo = 2;
     FollowJointNo = 3;
-    default_value = 0; 
+    default_value = 8; 
 
-    goal_msg = 'Moving MTM forward, finish when the closest distance between MTM and front panel of environment is 10 cm';
+    goal_msg = {'Press [i] to move MTM forward,', 
+                'finish when the closest distance between MTM and front panel of environment is around 1 cm'};
     [customize_value, frontest_pos] = wizard_move_two_joint(mtm_arm,...
-        joint_init_pos,...
-        param_name,...
-        ARM_NAME,...
-        default_value,...
-        goal_msg,...
-        couple_contraint,...
-        MovingJointNo,...
-        FollowJointNo);
-    config.joint_pos_upper_limit(2) = customize_value 
+                                                            joint_init_pos,...
+                                                            param_name,...
+                                                            ARM_NAME,...
+                                                            default_value,...
+                                                            goal_msg,...
+                                                            couple_contraint,...
+                                                            MovingJointNo,...
+                                                            FollowJointNo);
+    config.joint_pos_upper_limit(2) = customize_value;
     
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % prevent hitting upper panel of cartesian space
     Joint_No = 3;
     joint_init_pos =  frontest_pos;
-    joint_init_pos(5) = -90
+    joint_init_pos(5) = -90  %try to move joint 5 to the pose that is most likely hit the upper plane of environment
     param_name = 'Maximum Sum Position of Joint2 and Joint3';
-    recommend_val = 10;
-    goal_msg = 'Moving MTM upward by increasing Joint#3, finish when distal links of MTM 10cm away from top panel of environment';
+    recommend_val = 9;
+    goal_msg = {'Press [i] to move MTM upward,', 
+                'finish when the closest distance between MTM and upper panel of environment is around 1 cm'};
     [customize_value, ~] = wizard_move_one_joint(mtm_arm,...
         joint_init_pos,...
         Joint_No,...
@@ -78,15 +77,25 @@ function output_file_str = run_calibrate_JointLimit(ARM_NAME, SN)
         ARM_NAME,...
         recommend_val,...
         goal_msg);
-    config.coupling_upper_limit = customize_value 
+    config.coupling_upper_limit = customize_value; 
     
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % prevent hitting left panel of cartesian space
     Joint_No = 1;
     joint_init_pos =  frontest_pos;
-    joint_init_pos(4) = 180;
+    if strcmp(ARM_NAME, 'MTML')
+        joint_init_pos(4) = 0; %try to move joint 4 to the pose that is most likely hit the left plane of environment
+    else
+        joint_init_pos(4) = 180;
+    end
     param_name = 'Minimum of Joint 1';
-    recommend_val = 10;
-    goal_msg = 'Moving MTM upward by decreasing Joint#1, finish when distal links of MTM 10cm away from left panel of environment';
+    if strcmp(ARM_NAME, 'MTML')
+        recommend_val = -6;
+    else
+        recommend_val = -18;
+    end
+    goal_msg = {'Press [d] to move MTM in the left direction', 
+                'finish when the closest distance between MTM and left panel of environment is around 1 cm'};
     [customize_value, ~] = wizard_move_one_joint(mtm_arm,...
         joint_init_pos,...
         Joint_No,...
@@ -94,15 +103,25 @@ function output_file_str = run_calibrate_JointLimit(ARM_NAME, SN)
         ARM_NAME,...
         recommend_val,...
         goal_msg);
-    config.joint_pos_lower_limit(1) = customize_value  
+    config.joint_pos_lower_limit(1) = customize_value;  
     
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % prevent hitting right panel of cartesian space
     Joint_No = 1;
     joint_init_pos =  frontest_pos;
-    joint_init_pos(4) = 0;
+    if strcmp(ARM_NAME, 'MTML')
+        joint_init_pos(4) = -180; %try to move joint 4 to the pose that is most likely hit the right plane of environment
+    else
+        joint_init_pos(4) = 0;
+    end
     param_name = 'Maximum of Joint 1';
-    recommend_val = 10;
-    goal_msg = 'Moving MTM upward by increasing Joint#1, finish when distal links of MTM 10cm away from right panel of environment';
+    if strcmp(ARM_NAME, 'MTML')
+        recommend_val = 18;
+    else
+        recommend_val = 6;
+    end
+    goal_msg = {'Press [i] to move MTM in the right direction', 
+                'finish when the closest distance between MTM and front panel of environment is around 1 cm'};
     [customize_value, ~] = wizard_move_one_joint(mtm_arm,...
         joint_init_pos,...
         Joint_No,...
@@ -110,21 +129,24 @@ function output_file_str = run_calibrate_JointLimit(ARM_NAME, SN)
         ARM_NAME,...
         recommend_val,...
         goal_msg);
-    config.joint_pos_upper_limit(1) = customize_value
+    config.joint_pos_upper_limit(1) = customize_value;
     
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     % close the draw window
     close(gcf);
-    
-    save_path = fullfile('data', [ARM_NAME, '_',SN], 'real')
+    mtm_arm.move_joint(deg2rad(joint_origin_pose));
+   
+    % store data
+    save_path = fullfile('data', [ARM_NAME, '_',SN], 'real');
     if ~exist(save_path, 'dir')
-        mkdir(save_path)
+        mkdir(save_path);
     end
-    output_file_str = fullfile(save_path,'dataCollection_config_customized.json')
-    fid = fopen(output_file_str,'w');
+    dataCollection_config_customized_str = fullfile(save_path,'dataCollection_config_customized.json');
+    fid = fopen(dataCollection_config_customized_str,'w');
     jsonStr = jsonencode(config);
     fwrite(fid, jsonStr);
     fclose(fid);
-    fprintf('Save config file to %s\n', output_file_str);
+    fprintf('Save config file for dataCollection to %s\n', dataCollection_config_customized_str);
 end
 
 function [customized_value, current_pos] = wizard_move_one_joint(mtm_arm,...
@@ -137,7 +159,10 @@ function [customized_value, current_pos] = wizard_move_one_joint(mtm_arm,...
     input_str = '';
     customized_value = joint_init_pos(MovingJoint_No);
     joint_pos = joint_init_pos;
-    fprintf('Instruction: %s\n', goal_msg);
+    fprintf('Instruction: \n');
+    for i= 1:size(goal_msg)
+        fprintf('%d. %s\n', i, goal_msg{i})
+    end
     fprintf('Arm: %s\n', ARM_NAME);
     fprintf('Joint_No: %d\n', MovingJoint_No);
     fprintf('Customized Param Name: %s\n', param_name);
@@ -169,7 +194,7 @@ function [customized_value, current_pos] = wizard_move_one_joint(mtm_arm,...
         input_str = '';
     end
     
-    current_pos = joint_pos
+    current_pos = joint_pos;
 end
 
 
@@ -191,7 +216,10 @@ function [customized_value, current_pos] = wizard_move_two_joint(mtm_arm,...
 %     mtm_arm.move_joint(deg2rad(joint_init_pos));
     customized_value = joint_init_pos(MovingJointNo);
     joint_pos = joint_init_pos;
-    fprintf('Instruction: %s\n', goal_msg);
+    fprintf('Instruction: \n');
+    for i= 1:size(goal_msg)
+        fprintf('%d. %s\n', i, goal_msg{i})
+    end
     fprintf('Arm: %s\n', ARM_NAME);
     fprintf('Joint_No: %d\n', MovingJointNo);
     fprintf('Customized Param Name: %s\n', param_name);
@@ -226,7 +254,7 @@ function [customized_value, current_pos] = wizard_move_two_joint(mtm_arm,...
         input_str = '';
     end
     
-    current_pos =  joint_pos
+    current_pos =  joint_pos;
 end
 
 function argument_checking(ARM_NAME,...
