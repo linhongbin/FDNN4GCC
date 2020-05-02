@@ -99,9 +99,10 @@ In the terminal
     ```
 
   *  In the terminal, Type
-  ```bash
-  chmod +x run_Controller.py
-  python run_Controller.py
-  ```
 
-  Type `Ctrl+C` to stop safely. 
+    ```bash
+    chmod +x run_Controller.py
+    python run_Controller.py
+    ```
+
+  Type `Ctrl+C` to stop safely.
