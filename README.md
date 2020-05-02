@@ -85,12 +85,13 @@ In the terminal
 
      Run this script to run your GCC.
      * Modify `ARM_NAME`('MTML' or 'MTMR'), `load_PTM_param_path` in the file `run_Controller.py`. For example:
-      ```python
-      MTM_ARM = 'MTMR'
-      load_PTM_param_path = join("data", "MTMR_31519", "real", "gc-MTMR-31519.json")
-      ```
 
-      * uncomment the `controller_type` you want to use, for example
+    ```python
+    MTM_ARM = 'MTMR'
+    load_PTM_param_path = join("data", "MTMR_31519", "real", "gc-MTMR-31519.json")
+    ```
+
+  * uncomment the `controller_type` you want to use, for example
 
         ```python
         # controller_type = 'LfS' # Learn-from-Sratch approach
@@ -98,11 +99,11 @@ In the terminal
         # controller_type = 'PTM' # Physical Teacher Model
         ```
 
-      *  In the terminal, Type
+  *  In the terminal, Type
 
         ```bash
         chmod +x run_Controller.py
         python run_Controller.py
         ```
 
-      Type `Ctrl+C` to stop safely.
+  Type `Ctrl+C` to stop safely.
