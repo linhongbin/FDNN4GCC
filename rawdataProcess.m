@@ -10,13 +10,13 @@ function rawdataProcess(root_path, is_dual)
     
 
     data_path = fullfile(root_path, 'raw_data');
-    jnt_pos_file = fullfile(data_path, 'Real_MTMR_pos.mat');
-    jnt_tor_file = fullfile(data_path, 'Real_MTMR_tor.mat');
+    jnt_pos_file = fullfile(data_path, 'joint_pos.mat');
+    jnt_tor_file = fullfile(data_path, 'joint_tor.mat');
     [input_mat_1, output_mat_1] = rawdata2SinCosInput(jnt_pos_file,jnt_tor_file, sensitive_deg, D);
     
     if is_dual
-        jnt_pos_file = fullfile(data_path, 'Real_MTMR_pos_reverse.mat');
-        jnt_tor_file = fullfile(data_path, 'Real_MTMR_tor_reverse.mat');
+        jnt_pos_file = fullfile(data_path, 'joint_pos_reverse.mat');
+        jnt_tor_file = fullfile(data_path, 'joint_tor_reverse.mat');
         [input_mat_2, output_mat_2] = rawdata2SinCosInput(jnt_pos_file,jnt_tor_file, sensitive_deg, D);
         input_mat = [input_mat_1; input_mat_2];
         output_mat = [output_mat_1; output_mat_2];
