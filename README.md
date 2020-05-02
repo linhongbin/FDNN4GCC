@@ -13,13 +13,13 @@
 
 ## Installation
 1. Install [dVRK](https://github.com/jhu-cisst/cisst/wiki/Compiling-cisst-and-SAW-with-CMake#13-building-using-catkin-build-tools-for-ros).
-1. Implement the [analytical solution](https://github.com/jhu-dvrk/dvrk-gravity-compensation) of GCC for dVRK (To obtain a Physical Teacher Model).
-1. Install required Python packages
+2. Implement the [analytical solution](https://github.com/jhu-dvrk/dvrk-gravity-compensation) of GCC for dVRK (To obtain a Physical Teacher Model).
+3. Install required Python packages
 ```bash
 cd DFNN4GCC
 pip install requirements.txt
 ```
-1. Install DFNN4GCC
+4. Install DFNN4GCC
 ```
 git clone https://github.com/linhongbin-ws/DFNN4GCC
 ```
@@ -34,19 +34,19 @@ open another terminal and launch the dVRK console to control the MTM.
 qlacloserelays
 rosrun dvrk_robot dvrk_console_json -j <path-to-your-MTM-json-file>
 ```
-1. open Matlab. Go to the "DFNN4GCC" directory. Type in the command line
+2. open Matlab. Go to the "DFNN4GCC" directory. Type in the command line
 ```
 rosinit
 addpath('<path to /dvrk-ros>')
 ```
 
-1. modify `ARM_NAME`('MTML' or 'MTMR') and `SN`('Serial Number') in the file "run_collectData.m", for example:
+3. modify `ARM_NAME`('MTML' or 'MTMR') and `SN`('Serial Number') in the file "run_collectData.m", for example:
 ```
 ARM_NAME = 'MTMR'
 SN = '41878'
 ```
 
-1. run `run_collectData.m`
+4. run `run_collectData.m`
 
   In this program, we collect training, validating, testing data for a MTM. It take around **4** hours to finish the process. There are 4 subprocesses running in serial, `wizard program`, `generating pivot points`, `Collision Checking`, `data collection`, `data pre-processing`.
 
@@ -60,7 +60,7 @@ SN = '41878'
 
   * `data pre-processing`: Pre-processing the raw data to trigonometric representation.
 
-1. run `run_train.py`
+5. run `run_train.py`
 
   Modify `ARM_NAME`('MTML' or 'MTMR') and `SN`('Serial Number') in the file `run_train.py`, for example:
 ```
@@ -74,14 +74,14 @@ chmod +x run_train.py
 python run_train.py
 ```
 
-1. copy the json file for the [analytical solution](https://github.com/jhu-dvrk/dvrk-gravity-compensation) to DFNN4GCC directory. For example:
+6. copy the json file for the [analytical solution](https://github.com/jhu-dvrk/dvrk-gravity-compensation) to DFNN4GCC directory. For example:
 In the terminal
 
   ```bash
   cp <path-to-json-file>/gc-MTMR-31519.json <path-to-DFNN4GCC>/data/MTMR_31519/real)
   ```
 
-1. run `run_Controller.py`
+7. run `run_Controller.py`
 
  Run this script to run your GCC.
  * Modify `ARM_NAME`('MTML' or 'MTMR'), `load_PTM_param_path` in the file `run_Controller.py`. For example:
@@ -94,8 +94,8 @@ In the terminal
 
     ```python
     # controller_type = 'LfS' # Learn-from-Sratch approach
-  controller_type = 'PKD' # Physical Knowledge Distillation
-  # controller_type = 'PTM' # Physical Teacher Model
+    controller_type = 'PKD' # Physical Knowledge Distillation
+    # controller_type = 'PTM' # Physical Teacher Model
     ```
 
   *  In the terminal, Type
