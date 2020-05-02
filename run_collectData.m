@@ -36,11 +36,11 @@ save(fullfile(pivot_points_path_test, 'desired_pivot_points.mat'), 'config_mat' 
 
 % collision checking for safety during data collection. 
 % It ensure MTM in long data collection process not to hit environment once it passes.
-% safeCollisionCheck(config_mat_safeCheck, ARM_NAME);
+safeCollisionCheck(config_mat_safeCheck, ARM_NAME);
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-collect training data, about 4 hour.
+% % collect training data, about 4 hour.
 
 % in non-reverse order 
 is_reverse = false;
