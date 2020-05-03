@@ -50,7 +50,7 @@ git clone https://github.com/linhongbin-ws/DFNN4GCC
 
     In this program, we collect training, validating, testing data for a MTM. It take around **4** hours to finish the process. There are 4 subprocesses running in serial, `wizard program`, `generating pivot points`, `Collision Checking`, `data collection`, `data pre-processing`.
 
-    * `wizard program` (required command inputs): A wizard program for setting the customized joint limits for specific dVRK system. This is important since it can identify the maximum joint ranges within a safety workspace. In anther words, it helps to improve the balance between safety and achieved performance. User need to type character to input some commands in the command dialog.
+    * `wizard program` (required command inputs): A wizard program for setting the customized joint limits for specific dVRK system. This is important since it can identify the maximum joint ranges within a safety workspace. In anther words, it helps to improve the balance between safety and achieved performance. User need to type character to input some commands in the command dialog. There is a video to teaching user how to set joint limits using the Wizard Program [video](https://www.youtube.com/watch?v=O8KM-scxTk4).
 
     * `generating pivot points`: Generate the pivot points representing the desired positions of a MTM for training, validating and testing data.
 
