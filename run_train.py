@@ -140,16 +140,19 @@ def loop_func(train_data_path, test_data_path, use_net, robot, train_type='BP', 
 ### setting
 ARM_NAME = "MTML"
 SN = "41878"
+########
+
+load_PTM_param_path = join("data",  ARM_NAME+'_'+SN, "real", "gc-"+ARM_NAME+"-"+SN +".json")
 train_data_path = join(".", "data", ARM_NAME+'_'+SN, "real", "uniform", "N4", 'D6_SinCosInput', "dual")
 valid_data_path = join(".", "data", ARM_NAME+'_'+SN, "real", "random",  "N160", 'D6_SinCosInput')
 test_data_path = join(".", "data", ARM_NAME+'_'+SN, "real", "random", "N40",'D6_SinCosInput')
-load_PTM_param_file_str = join(".", "data", "MTML_41878", "real", "gc-MTML-41878.json")
+
 
 
 
 ###  train models
-loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002', train_type='BP', valid_data_path=valid_data_path)
-loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002', train_type='PKD', valid_data_path= valid_data_path, load_PTM_param_file_str = load_PTM_param_file_str)
+loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection','MTM', train_type='BP', valid_data_path=valid_data_path)
+loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection','MTM', train_type='PKD', valid_data_path= valid_data_path, load_PTM_param_file_str = load_PTM_param_file_str)
 # loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002', train_type='PKD', valid_data_path= valid_data_path, is_inputNormalized=False, is_outputNormalized=True)
 # loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002', train_type='PKD', valid_data_path= valid_data_path, is_inputNormalized=True, is_outputNormalized=False)
 # loop_func(train_data_path, test_data_path, 'ReLU_Dual_UDirection','MTMR28002', train_type='PKD', valid_data_path= valid_data_path, is_inputNormalized=False, is_outputNormalized=False)

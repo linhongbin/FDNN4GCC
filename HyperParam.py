@@ -1,6 +1,6 @@
 import torch
 def get_hyper_param(robot, use_net=None, train_type=None, is_sim = False, sim_distScale=None):
-    if robot == 'MTMR28002':
+    if robot == 'MTM':
         param_dict = {}
         param_dict['max_training_epoch'] = 2000 # stop train when reach maximum training epoch
         param_dict['goal_loss'] = 1e-4 # stop train when reach goal loss
